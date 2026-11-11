@@ -1,0 +1,51 @@
+# Chapter 4 quiz — Claude Code subagent files and built-ins.
+- id: c4-q1
+  type: single
+  prompt: "Which frontmatter fields are REQUIRED in a Claude Code subagent file?"
+  options:
+    - "name and tools"
+    - "name and description"
+    - "description and model"
+    - "name, description, and model"
+  correct: [1]
+  explanation: "Only name and description are required. A file with a name but no description is skipped entirely (with the reason in the debug log), and a file with no name is treated as documentation kept beside your agents."
+- id: c4-q2
+  type: single
+  prompt: "A project agent in .claude/agents/ and a personal agent in ~/.claude/agents/ share the name 'reviewer'. Which one runs?"
+  options:
+    - "The personal one — user scope always wins"
+    - "The project one — project scope has higher priority than user scope"
+    - "Both, merged field by field"
+    - "Neither; name conflicts disable both agents"
+  correct: [1]
+  explanation: "Priority runs managed settings, then the --agents CLI flag, then .claude/agents/ (project), then ~/.claude/agents/ (user), then plugin agents. Same name → the higher-priority location's definition wins."
+- id: c4-q3
+  type: multi
+  prompt: "Which of these are real Claude Code subagent frontmatter fields?"
+  options:
+    - "isolation: worktree"
+    - "memory: project"
+    - "effort: high"
+    - "permissions: a list of action/resource/effect rules"
+  correct: [0, 1, 2]
+  explanation: "isolation, memory, and effort are all Claude Code fields. The action/resource/effect rule list is OpenCode's permission mechanism — Claude Code restricts behavior with tools, disallowedTools, and permissionMode instead."
+- id: c4-q4
+  type: boolean
+  prompt: "In Claude Code, a subagent that Claude spawns from the main conversation starts in the background by default."
+  correct: true
+  explanation: "That is the shipped default — the refinement of Chapter 1's simpler story. The parent keeps working and collects the result later; foreground (Claude waiting) requires conditions like fork mode off in interactive sessions, or claude -p where Claude may wait by judgment or on request."
+- id: c4-q5
+  type: single
+  prompt: "Claude passes a model parameter for one invocation, your agent file sets model: haiku, and CLAUDE_CODE_SUBAGENT_MODEL is set to opus. What does that subagent run on?"
+  options:
+    - "haiku — frontmatter beats the environment variable"
+    - "opus — the environment variable always wins"
+    - "The per-invocation model parameter — it outranks both"
+    - "The main conversation's model — nothing else applies"
+  correct: [2]
+  explanation: "Resolution order: per-invocation parameter first, then frontmatter model (inherit = main model), then CLAUDE_CODE_SUBAGENT_MODEL, then the main conversation's model. The env var is a default, not an override."
+- id: c4-q6
+  type: boolean
+  prompt: "Editing a subagent file in .claude/agents/ requires restarting Claude Code for the change to take effect."
+  correct: false
+  explanation: "Both agent directories are watched: edits are detected within a few seconds and the next delegation uses the updated definition. Restart is only needed in narrow cases — like the first file in a NEW agents directory, or --add-dir directories, which aren't watched."

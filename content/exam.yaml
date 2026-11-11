@@ -1,13 +1,13 @@
 # Final exam — Subagents Mastery.
 #
 # Ships in Task 8 with questions drawn from Chapters 0-1 material (plus
-# foundational subagent concepts). Task 9 appends chapter-specific questions as
-# its chapters land: exam-26..29 cover Chapter 2 (when to dispatch),
-# exam-30..33 cover Chapter 3 (OpenCode agents), exam-34..37 cover Chapter 4
-# (Claude Code agents). Task 14 verifies the exam spans the whole course —
-# so the exam page is fully data-driven: never assume a fixed question count
-# beyond the validator minimum (>=20, enforced by loadExam). Every question
-# must carry a non-empty explanation.
+# foundational subagent concepts). Task 9 appended chapter-specific questions
+# as its chapters landed: exam-26..29 cover Chapter 2 (when to dispatch),
+# exam-30..33 cover Chapter 3 (OpenCode agents), and exam-34..37 cover
+# Chapter 4 (Claude Code agents) — 37 questions total. Task 14 verifies the
+# exam spans the whole course — so the exam page is fully data-driven: never
+# assume a fixed question count beyond the validator minimum (>=20, enforced
+# by loadExam). Every question must carry a non-empty explanation.
 passMarkPercent: 80
 questions:
   - id: exam-01
@@ -300,3 +300,38 @@ questions:
       - "deny subagent reviewer, then allow subagent *"
     correct: [1]
     explanation: "Last match wins: deny * then allow reviewer leaves reviewer allowed and everything else denied. Option A inverts it — the trailing deny would win for reviewer too. Option C allows only reviewer but denies nothing else explicitly, and option D is the exact opposite of the intent."
+  - id: exam-34
+    type: single
+    prompt: "Which Claude Code subagent location has the HIGHEST priority when definitions share a name?"
+    options:
+      - "The --agents CLI flag"
+      - ".claude/agents/ in the current project"
+      - "Managed settings deployed by the organization"
+      - "An installed plugin's agents/ directory"
+    correct: [2]
+    explanation: "The full order: managed settings (highest), then the --agents CLI flag, then .claude/agents/ (project), then ~/.claude/agents/ (user), then plugin agents (lowest). Organizations can mandate agents you cannot override by name."
+  - id: exam-35
+    type: single
+    prompt: "Your agent file sets model: haiku, CLAUDE_CODE_SUBAGENT_MODEL is set, and Claude passes a model parameter on this invocation. Which model runs?"
+    options:
+      - "haiku — frontmatter always beats the environment variable"
+      - "The per-invocation model parameter — first in the resolution order"
+      - "The CLAUDE_CODE_SUBAGENT_MODEL value"
+      - "The main conversation's model"
+    correct: [1]
+    explanation: "Resolution order: 1) per-invocation parameter, 2) frontmatter model (inherit = main model), 3) CLAUDE_CODE_SUBAGENT_MODEL, 4) main conversation's model. The env var is a default, not an override."
+  - id: exam-36
+    type: boolean
+    prompt: "A custom Claude Code subagent starts with the user, project, and local CLAUDE.md files in its context — unless its definition sets omitClaudeMd."
+    correct: true
+    explanation: "Custom subagents load the CLAUDE.md hierarchy and a git status snapshot at startup; omitClaudeMd: true drops the CLAUDE.md files. The built-in Explore and Plan skip both regardless, to keep research fast and inexpensive."
+  - id: exam-37
+    type: multi
+    prompt: "Which statements about Claude Code delegation and descriptions are true?"
+    options:
+      - "Claude uses each subagent's description to decide when to delegate"
+      - "Combined custom descriptions over 15,000 tokens trigger a startup warning"
+      - "Detail belongs in the system prompt, which loads only when that subagent runs"
+      - "Longer descriptions always produce better routing, so write them exhaustively"
+    correct: [0, 1, 2]
+    explanation: "The description is the router; keep it short because descriptions ride along in every session's context — over the 15,000-token budget Claude Code warns at startup. Move the detail into the system prompt, which only loads when the subagent runs."

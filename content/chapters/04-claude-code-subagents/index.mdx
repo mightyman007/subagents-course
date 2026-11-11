@@ -1,0 +1,220 @@
+---
+title: "Claude Code: subagent files and built-ins"
+order: 4
+objectives:
+  - "Create subagents as .claude/agents and ~/.claude/agents Markdown files, and predict which definition wins when names collide"
+  - "Write the required frontmatter — name and description — and choose the right optional fields, from tools and model to isolation and background"
+  - "Trace the four-step model resolution order for any subagent invocation"
+  - "Correct the foreground/background story: Claude Code's default is background, and background changes the tool set"
+---
+
+OpenCode made agents files; Claude Code does too — with different field names, a stricter contract, and more knobs. Same core idea, so this chapter moves faster where the concepts transfer and slows down only where Claude Code genuinely differs: scope priority, model resolution, and a foreground/background story that needs correcting from Chapter 1's simplified version.
+
+## Where subagent files live
+
+Subagents are Markdown files with YAML frontmatter, plus the system prompt as the body. Two everyday locations:
+
+- `.claude/agents/*.md` — **project** scope: for agents specific to this codebase; check them into version control so the team can use and improve them
+- `~/.claude/agents/` — **user** scope: personal agents available in every project on your machine
+
+Both directories are scanned recursively — organize into subfolders freely, because **identity comes only from the `name` frontmatter field**, not the filename or path. (Contrast with OpenCode, where the nested path *becomes* the ID. Here the path is just filing; the `name` is load-bearing, so keep names unique within a scope.)
+
+When two definitions share a name, a five-level priority decides:
+
+| Location | Scope | Priority |
+| --- | --- | --- |
+| Managed settings | organization-wide (admin-deployed) | 1 — highest |
+| `--agents` CLI flag | current session only (JSON, not saved to disk) | 2 |
+| `.claude/agents/` | current project | 3 |
+| `~/.claude/agents/` | all your projects | 4 |
+| Plugin's `agents/` directory | where the plugin is enabled | 5 — lowest |
+
+Higher priority wins on name collisions. Practical reading: your organization can mandate an agent you cannot override, a project agent beats your personal one, and CLI-defined agents exist only for the session that launched them — handy for quick tests.
+
+## Frontmatter: the anatomy
+
+Only two fields are required. Everything else is an optional knob:
+
+<Mermaid
+  chart={`
+graph TD
+  A["agent file: .claude/agents/code-reviewer.md"] --> B["frontmatter: YAML between the dashes"]
+  B --> C["name + description: the only REQUIRED fields"]
+  B --> D["tools and disallowedTools: allowlist and denylist"]
+  B --> E["model: sonnet, opus, haiku, a full model ID, or inherit"]
+  B --> F["permissionMode, maxTurns, skills, mcpServers"]
+  B --> G["memory, background, omitClaudeMd, effort"]
+  B --> H["isolation: worktree, color"]
+  A --> I["body: Markdown"]
+  I --> J["becomes the subagent's system prompt"]
+`}
+/>
+
+| Field | What it does |
+| --- | --- |
+| `name` | **Required.** Unique identifier, at most 256 characters, no colons. The filename doesn't have to match |
+| `description` | **Required.** When Claude should delegate to this subagent — it's the router, see below |
+| `tools` | Allowlist, comma-separated or a YAML list. Omitted = every tool available to subagents |
+| `disallowedTools` | Denylist, removed from the inherited or listed set. Applied first, then `tools` resolves against what remains |
+| `model` | `sonnet`, `opus`, `haiku`, a full model ID, or `inherit` for the main conversation's model. Omitted = the resolution order below |
+| `permissionMode` | The permission mode the subagent runs in: `default`, `acceptEdits`, `auto`, `dontAsk`, `bypassPermissions`, or `plan` |
+| `maxTurns` | Cap on agentic turns; output past the limit comes back marked partial and can be resumed |
+| `skills` | Skills whose full content is preloaded into the subagent's context at startup |
+| `mcpServers` | MCP servers scoped to this subagent — inline definitions or references to configured ones |
+| `memory` | Persistent memory scope: `user`, `project`, or `local` — cross-session learning between runs |
+| `background` | `true` keeps this subagent in the background even when Claude would wait for it |
+| `omitClaudeMd` | `true` starts the subagent without the user, project, and local CLAUDE.md files |
+| `effort` | Effort level while this subagent is active: `low`, `medium`, `high`, `xhigh`, `max` |
+| `isolation` | `worktree` runs the subagent in a temporary git worktree — an isolated copy of the repository, cleaned up if it makes no changes |
+| `color` | Display color in the task list and transcript: `red`, `blue`, `green`, `yellow`, `purple`, `orange`, `pink`, or `cyan` |
+
+Two structural facts worth internalizing. A subagent gets **only its own system prompt plus basic environment details** — the working directory, and unless `omitClaudeMd` is set, your CLAUDE.md files and a git status snapshot (the built-in Explore and Plan skip those for speed). It does not receive Claude Code's own system prompt. And a subagent sends **its own model requests**, counted against the same usage limits as your main conversation — cheaper models per subagent are a real cost lever, not a cosmetic one.
+
+## Which model runs: the four-step resolution
+
+When a subagent starts, its model resolves in a fixed order — first source that applies wins:
+
+1. **The per-invocation `model` parameter** — Claude can pass a model alias when it spawns that specific subagent
+2. **The definition's `model` frontmatter** — where `inherit` selects the main conversation's model
+3. **The `CLAUDE_CODE_SUBAGENT_MODEL` environment variable** — if set to an alias or model ID
+4. **The main conversation's model**
+
+So `CLAUDE_CODE_SUBAGENT_MODEL` is a *default*, not an override — frontmatter and per-invocation choices beat it. Know the order and you can predict every "why is this running on that model?" question before it comes up.
+
+## The built-ins
+
+| Built-in | Tools | Model | Purpose |
+| --- | --- | --- | --- |
+| `Explore` | Read-only; Write and Edit are denied | The main conversation's model (exact behavior varies by connection type) | File discovery, code search, codebase exploration |
+| `Plan` | Read-only; Write and Edit are denied | Inherits the main conversation's model | Codebase research during plan mode |
+| `general-purpose` | Every tool available to subagents | Follows the resolution order above | Complex multi-step work — exploration plus modification |
+
+**`Explore` takes a thoroughness level.** When Claude delegates to it, the invocation specifies how hard to search: **quick** for targeted lookups, **medium** for balanced exploration, **very thorough** for comprehensive analysis. That dial is why Explore is the default answer to "survey this area" — and since it's read-only, surveying can't mutate anything.
+
+One operational detail: **Explore and Plan are one-shot.** They return no agent ID, so Claude can't resume them for follow-up work; when a task may need continuation, use `general-purpose` or a custom agent. (Claude Code also ships smaller helpers — `statusline-setup`, `claude-code-guide` — that fire automatically; you'll rarely invoke them yourself.)
+
+## The description is the router
+
+Claude decides *when* to delegate by matching your request against each subagent's `description`. Two consequences:
+
+- **Write descriptions that single out the right agent.** Phrases like "use proactively" encourage delegation; vague descriptions mean vague routing — two overlapping descriptions compete for the same tasks.
+- **Keep them short.** Descriptions load into the main conversation's context for every session. When the combined descriptions of your custom subagents exceed **15,000 tokens**, Claude Code shows a startup warning with the total count. The fix is structural: move detail into the subagent's system prompt, which loads only when that subagent actually runs.
+
+## Foreground and background, corrected
+
+Chapter 1 taught the two modes with "foreground for most tasks" as the working default. For Claude Code, that needs a refinement — the shipped default is the opposite:
+
+> **With nothing configured, a subagent Claude spawns from your main conversation starts in the background.** The parent keeps working; the result arrives later as a completion notification in a subsequent turn. Foreground — the parent blocking until the result lands — is what you get when Claude *waits*. In `claude -p` and the Agent SDK, Claude can wait on its own judgment or when you ask. In interactive sessions, waiting means turning fork mode off first (set `CLAUDE_CODE_FORK_SUBAGENT=0` and restart); then "run the reviewer subagent and wait for its report" does what it says. An agent can also pin itself with `background: true` in frontmatter — background even when Claude would wait.
+
+And the mode is not just scheduling: **background subagents run with a smaller, fixed set of built-in tools** — the usual read, search, edit, and web tools — plus MCP tools. Anything else is removed from the pool even if the agent's `tools` field lists it, so the same definition can resolve to different tools depending on where it runs.
+
+This is the refined picture behind Chapter 1's simplification: the mode is a property of the *dispatch and the tool's defaults*, not a universal truth. OpenCode treats foreground and background child sessions as ordinary equals; Claude Code starts main-conversation spawns in the background and makes you opt into waiting.
+
+## Files hot-reload; `/agents` shows the way
+
+Claude Code **watches both agent directories**. Edit a subagent file on disk — or have Claude write one — and the change is detected within seconds: the next delegation uses the updated definition, no restart needed. Three exceptions require a restart: a brand-new `agents` directory that didn't exist when the session started, directories added with `--add-dir`, and sessions launched with `--disable-slash-commands` (which don't watch at all).
+
+Run `/agents` for guidance: it prints a reminder to ask Claude to create agents or to edit `.claude/agents/` and `~/.claude/agents/` directly. (On versions 2.1.197 and earlier it instead opened an interactive wizard with a **Library** tab for creating, editing, and deleting agents.)
+
+## A complete example: the reviewer agent
+
+The course ships the Claude Code twin of Chapter 3's reviewer at [`/downloads/agents/claude-code-reviewer.md`](/downloads/agents/claude-code-reviewer.md). Drop it into `.claude/agents/` and it's live. The file in full:
+
+````markdown
+---
+name: code-reviewer
+description: Reviews code changes for bugs, security issues, and readability. Use proactively after writing or modifying code, and when the user asks for a review.
+tools: Read, Glob, Grep
+model: sonnet
+---
+
+You are a senior code reviewer. Your job is to find real problems in the
+changes under review and report them clearly. Your tool set is intentionally
+read-only — Read, Glob, Grep — so review the code as it stands; you cannot
+modify files or run commands, and you must not pretend to.
+
+## Scope
+
+Review the changes named in the delegation prompt (a diff, a file list, or a
+feature description). Read enough surrounding code to judge each change in
+context — a line can be correct in isolation and wrong where it sits.
+
+## Method
+
+1. Understand the intent of the change before judging its details.
+2. Trace data flow through the change: what enters, what leaves, what can be
+   null, empty, negative, or hostile.
+3. Check the change's blast radius: every caller and every state affected.
+4. Verify error paths, not just the happy path: partial failures, timeouts,
+   and cleanup.
+5. Check the tests: does the change assert the new behavior, or just run it?
+
+## Findings, in severity order
+
+Report findings ordered by severity — most critical first:
+
+- **Critical** — correctness bugs, data loss or corruption, security holes
+  (injection, unsafe deserialization, missing authz), or anything that breaks
+  builds or tests. Must be fixed before merge.
+- **High** — likely bugs on realistic paths, race conditions, unhandled
+  errors with real consequences, or security weaknesses that need specific
+  conditions to exploit.
+- **Medium** — design problems that will hurt soon: leaky abstractions,
+  missing validation at trust boundaries, tests that can't fail, resource
+  leaks on uncommon paths.
+- **Low** — readability and maintainability: confusing names, missing or
+  misleading comments, duplication that will drift, dead code.
+
+Every finding must include:
+
+1. **Severity** and a one-line title.
+2. **Location** as `path/to/file.ts:LINE` (line of the offending code, not
+   the diff hunk).
+3. **Why it matters** — the concrete failure mode, not a category name.
+4. **A concrete fix** — the smallest change that resolves it.
+
+Do not report: formatting or style rules a formatter would fix, opinions
+without a failure mode, or praise. If a section of the change is solid,
+say so once in the verdict, not as findings.
+
+## Output format
+
+```
+## Review findings
+
+[Critical] <title>
+  path/to/file.ts:42 — <why it matters>. Fix: <concrete fix>.
+
+[High] ...
+[Medium] ...
+[Low] ...
+
+## Verdict
+
+<One paragraph: is this safe to merge as-is? If not, what are the minimum
+changes required? Distinguish "must fix before merge" from "follow-up".>
+```
+
+If you find nothing above Low, say so explicitly and explain what you
+checked. An empty report that shows its work is more trustworthy than a
+vague one.
+````
+
+Compare it to Chapter 3's OpenCode twin, because the contrast teaches. Same body — the review methodology is the system prompt in both. Different frontmatter: Claude Code restricts tools with an allowlist (`tools: Read, Glob, Grep`) where OpenCode used deny rules, and it needs a `name` field because the filename isn't the identity.
+
+<YouTubeEmbed id="Pif98jOScYc" title="Claude Code Subagents Tutorial: Build a Team of Specialized AI Agents" />
+
+## OpenCode and Claude Code, side by side
+
+| | OpenCode | Claude Code |
+| --- | --- | --- |
+| Agent files | `.opencode/agents/` + `~/.config/opencode/agents/` | `.claude/agents/` + `~/.claude/agents/` |
+| Identity | The file's path — nested dirs become the ID | The `name` frontmatter field |
+| Restricting actions | Permission rules: allow / ask / deny | `tools` allowlist + `disallowedTools` denylist |
+| Read-only researcher | `explore` | `Explore`, with a thoroughness dial |
+| Multi-step worker | `general` — cannot spawn more subagents | `general-purpose` |
+| Default dispatch mode | Foreground and background child sessions | Background for main-conversation spawns |
+
+## What you should now be able to say
+
+If a colleague asks "how do subagents work in Claude Code?", your answer: agents are Markdown files in `.claude/agents/` (project) or `~/.claude/agents/` (user), identified by their `name` and routed by their `description`; five scopes collide by priority with managed settings on top; the model comes from a four-step resolution ending at the main conversation's model; and out of the box, spawns run in the background on a filtered tool set unless something waits for them. You have now seen the same idea expressed twice — next chapter is about the part that doesn't change: writing dispatches worth receiving.

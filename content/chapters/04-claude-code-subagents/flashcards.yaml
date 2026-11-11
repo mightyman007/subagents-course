@@ -1,0 +1,45 @@
+# Chapter 4 flashcards — Claude Code subagent files.
+- id: c4-f1
+  front: "Where do Claude Code subagent files live, and what are the two scopes?"
+  back: ".claude/agents/*.md = project scope (check into version control). ~/.claude/agents/ = user scope (all your projects). Both are scanned recursively; identity comes only from the name field."
+  tags: [claude-code]
+- id: c4-f2
+  front: "Which frontmatter fields are required on a Claude Code subagent?"
+  back: "name (unique, max 256 chars, no colons; filename can differ) and description (when Claude should delegate). Everything else is optional."
+  tags: [claude-code]
+- id: c4-f3
+  front: "Recite the five-level scope priority for same-name Claude Code subagents."
+  back: "1) Managed settings 2) --agents CLI flag (session only) 3) .claude/agents/ (project) 4) ~/.claude/agents/ (user) 5) plugin agents/ directory. Higher priority wins."
+  tags: [claude-code]
+- id: c4-f4
+  front: "The four-step model resolution order for a Claude Code subagent?"
+  back: "1) Per-invocation model parameter 2) the definition's model frontmatter (inherit = main model) 3) CLAUDE_CODE_SUBAGENT_MODEL env var 4) the main conversation's model."
+  tags: [claude-code]
+- id: c4-f5
+  front: "What is the description field's job — and what happens when descriptions get heavy?"
+  back: "It routes auto-delegation: Claude matches requests against it. Combined custom descriptions over 15,000 tokens trigger a startup warning — move detail into the system prompt, which loads only when that subagent runs."
+  tags: [claude-code]
+- id: c4-f6
+  front: "Name Claude Code's three built-in subagents and their jobs."
+  back: "Explore — read-only codebase research with a thoroughness dial (quick / medium / very thorough). Plan — research during plan mode, read-only. general-purpose — every subagent tool, for multi-step exploration plus modification."
+  tags: [claude-code]
+- id: c4-f7
+  front: "What's special about what Explore and Plan DON'T load — and about resuming them?"
+  back: "They start without your CLAUDE.md files and the git status snapshot (fast, cheap research). They're also one-shot: no agent ID, so Claude can't resume them — use general-purpose or a custom agent for follow-ups."
+  tags: [claude-code]
+- id: c4-f8
+  front: "Foreground or background — what is Claude Code's actual default for spawns from the main conversation?"
+  back: "Background. The parent keeps working; results arrive as completion notifications. Foreground = Claude waits (claude -p by judgment/request; interactive sessions after turning fork mode off). background: true pins an agent to the background regardless."
+  tags: [claude-code]
+- id: c4-f9
+  front: "How does the background change a subagent's tools?"
+  back: "Background subagents keep MCP tools plus a smaller fixed set of built-ins (read, search, edit, web, and a few others). Everything else is removed even if listed in tools — the same definition can resolve differently foreground vs background."
+  tags: [claude-code]
+- id: c4-f10
+  front: "Do Claude Code agent edits need a restart? What are the exceptions?"
+  back: "No — both agent dirs are watched; changes apply within seconds. Restart only for a first file in a NEW agents directory, --add-dir directories, or sessions started with --disable-slash-commands."
+  tags: [claude-code]
+- id: c4-f11
+  front: "What does isolation: worktree give a subagent?"
+  back: "A temporary git worktree — an isolated copy of the repository branched from the default branch, where its commands run. Auto-cleaned if the subagent makes no changes."
+  tags: [claude-code]
