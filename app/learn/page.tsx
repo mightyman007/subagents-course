@@ -25,8 +25,11 @@ export default function LearnIndex() {
         <p className="mt-3 text-sm leading-relaxed text-muted">
           Work through the chapters in order — each builds on the last. Score{" "}
           {CHAPTER_DONE_PERCENT}% or higher on a chapter quiz to mark it done. Across the course:
-          {chapters.length} chapters, {quizTotal} quiz questions, {cardTotal} flashcards, and a
-          final exam.
+          {chapters.length} chapters, {quizTotal} quiz questions, {cardTotal} flashcards, and{" "}
+          <Link href="/exam" className="text-accent underline-offset-4 hover:underline">
+            a final exam
+          </Link>
+          .
         </p>
       </header>
 

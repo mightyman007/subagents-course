@@ -1,0 +1,225 @@
+# Final exam — Subagents Mastery.
+#
+# Ships in Task 8 with questions drawn from Chapters 0-1 material (plus
+# foundational subagent concepts). Tasks 9-10 will each APPEND >=3
+# chapter-specific questions as their chapters land, and Task 14 verifies the
+# exam spans the whole course — so the exam page is fully data-driven: never
+# assume a fixed question count beyond the validator minimum (>=20, enforced
+# by loadExam). Every question must carry a non-empty explanation.
+passMarkPercent: 80
+questions:
+  - id: exam-01
+    type: single
+    prompt: "Which statement best defines a subagent?"
+    options:
+      - "A second assistant you chat with in a separate window"
+      - "A child session the parent spawns for one task: it starts with fresh context, works autonomously, and returns a result"
+      - "A background daemon that watches your repository for changes"
+      - "A saved prompt template replayed on demand"
+    correct: [1]
+    explanation: "A subagent is a focused worker for one dispatch — fresh context, autonomous tool use, one compact result back. It is explicitly not a second assistant you chat with and not a daemon in your repo."
+  - id: exam-02
+    type: boolean
+    prompt: "A subagent's context window starts empty and receives only what the dispatch puts there."
+    correct: true
+    explanation: "That freshness is the defining property: no inherited conversation history, no earlier dead ends, none of the files you happened to open. The child knows exactly what the dispatch says — and nothing else."
+  - id: exam-03
+    type: single
+    prompt: "When a subagent finishes its task, what reaches the parent?"
+    options:
+      - "A transcript of every tool call it made"
+      - "A compact final report — the conclusion"
+      - "A full snapshot of its context window"
+      - "The raw contents of every file it read"
+    correct: [1]
+    explanation: "Only the final result travels back. All intermediate work — greps, file reads, dead ends — stays inside the child's context. That absence is the feature."
+  - id: exam-04
+    type: multi
+    prompt: "Which of these are benefits of context isolation?"
+    options:
+      - "Token economy: the child's exploration burns the child's budget, and the parent pays only for the result"
+      - "Attention quality: the parent's context stays dense in decisions instead of raw evidence"
+      - "Mistake containment: the child's dead ends never enter the parent's reasoning"
+      - "The child can quietly patch the parent's memory when it finds better facts"
+    correct: [0, 1, 2]
+    explanation: "Isolation protects the main conversation three ways — token economy, attention quality, mistake containment. The child can neither see nor mutate the parent's context, so the fourth option is impossible by design."
+  - id: exam-05
+    type: single
+    prompt: "Who composes the dispatch a subagent receives?"
+    options:
+      - "The user, talking to the subagent directly"
+      - "The parent, which writes the task, the context the child needs, and the constraints"
+      - "The subagent, by requesting a task from the tool runtime"
+      - "Nobody — subagents pick their own work from the repository"
+    correct: [1]
+    explanation: "You rarely talk to a subagent directly. The parent composes the dispatch — task description, needed context, constraints — and only then spawns the child."
+  - id: exam-06
+    type: boolean
+    prompt: "If the dispatch is vague, the subagent will ask the user clarifying questions before starting."
+    correct: false
+    explanation: "The child cannot reach the user and cannot see your intentions — it knows only the dispatch. Vague dispatch, vague work; dispatch quality is the parent's responsibility."
+  - id: exam-07
+    type: single
+    prompt: "A subagent returns a result shaped differently from what the parent wanted. Most likely root cause?"
+    options:
+      - "The subagent decided to ignore the instructions"
+      - "The dispatch never specified the output format — result expectations belong in the dispatch"
+      - "The subagent's context window was stale"
+      - "The tool runtime truncated the result"
+    correct: [1]
+    explanation: "The child knows only the dispatch. If the result contract — format, scope, what 'done' looks like — is not written there, the child cannot honor it."
+  - id: exam-08
+    type: multi
+    prompt: "What does a well-composed dispatch carry?"
+    options:
+      - "The task description"
+      - "The context the child needs: starting paths, naming conventions, what the result is for"
+      - "Constraints such as read-only, a time budget, or an output format"
+      - "A copy of the parent's full conversation history"
+    correct: [0, 1, 2]
+    explanation: "A dispatch is task + context + constraints. The parent's history is never copied over — the child starts fresh by design, which is where the isolation benefits come from."
+  - id: exam-09
+    type: single
+    prompt: "In which dispatch mode does the subagent's result arrive as the next beat of the same conversation?"
+    options:
+      - "Background"
+      - "Foreground"
+      - "Detached"
+      - "Either — the mode does not change how results are delivered"
+    correct: [1]
+    explanation: "Foreground pauses the parent until the subagent returns, so the result lands as the next beat of the conversation. Background work is collected later, not inline."
+  - id: exam-10
+    type: boolean
+    prompt: "Background dispatch is how you run genuinely parallel work — several independent investigations at once."
+    correct: true
+    explanation: "Background subagents run while the parent (and you) keep working; you collect the results later. Foreground is the simple default; background trades bookkeeping for parallelism."
+  - id: exam-11
+    type: single
+    prompt: "Which sentence captures the foreground/background trade-off?"
+    options:
+      - "Foreground buys parallelism at the cost of simplicity"
+      - "Background buys simplicity at the cost of parallelism"
+      - "Foreground trades parallelism for simplicity; background trades bookkeeping for parallelism"
+      - "Both modes block the parent equally, just with different UIs"
+    correct: [2]
+    explanation: "Foreground: the parent pauses and waits — simple and deterministic. Background: the parent keeps working — parallelism, at the price of tracking and collecting results yourself."
+  - id: exam-12
+    type: single
+    prompt: "OpenCode V2's built-in SUBAGENTS (not its primary agents) are:"
+    options:
+      - "build and plan"
+      - "general and explore"
+      - "Explore and Plan"
+      - "general-purpose and code-reviewer"
+    correct: [1]
+    explanation: "OpenCode ships build and plan as primary agents, and two subagents: general (a capable worker for multi-step tasks with tool access) and explore (fast, read-only codebase search)."
+  - id: exam-13
+    type: single
+    prompt: "Which Claude Code built-in is a fast, read-only researcher whose thoroughness you can tune?"
+    options:
+      - "general-purpose"
+      - "Plan"
+      - "Explore"
+      - "build"
+    correct: [2]
+    explanation: "Claude Code ships Explore (read-only codebase research with adjustable thoroughness), Plan (implementation planning), and general-purpose (multi-step work with the normal tool set)."
+  - id: exam-14
+    type: multi
+    prompt: "Which built-in agents are the capable multi-step workers with the normal tool set?"
+    options:
+      - "OpenCode's general"
+      - "Claude Code's general-purpose"
+      - "OpenCode's explore"
+      - "Claude Code's Explore"
+    correct: [0, 1]
+    explanation: "The two 'general' agents are the multi-step workers with tool access; the two 'explore' agents are fast, read-only searchers built for finding and understanding code."
+  - id: exam-15
+    type: boolean
+    prompt: "You must write custom agent configuration before you can dispatch any subagent."
+    correct: false
+    explanation: "Both tools ship useful built-ins, so dispatching is available right now — before you configure anything. Custom agent files come later and go beyond the built-ins."
+  - id: exam-16
+    type: single
+    prompt: "Which task most clearly belongs in the MAIN conversation rather than a subagent?"
+    options:
+      - "Surveying a large codebase for every place JWTs are validated"
+      - "Tight, iterative back-and-forth with you on a design decision"
+      - "A long-running independent investigation that would otherwise block your flow"
+      - "A quick read-only search for where a symbol is defined"
+    correct: [1]
+    explanation: "A subagent is a one-shot worker: one task in, one result out. Work that needs tight iterative interaction with you belongs in the main conversation — knowing when NOT to dispatch is as important as knowing when to."
+  - id: exam-17
+    type: boolean
+    prompt: "A subagent can see and mutate the parent's context whenever it needs information."
+    correct: false
+    explanation: "A subagent is not shared state: the child can neither see nor mutate the parent's context. Information must travel in via the dispatch, and findings must travel back via the result."
+  - id: exam-18
+    type: single
+    prompt: "Why does dumping hundreds of grep results into the main conversation degrade everything that comes after?"
+    options:
+      - "It exceeds the subagent's token budget"
+      - "Models attend less reliably to material buried mid-context, so every later instruction is slightly worse attended"
+      - "Raw search output disables file editing for the rest of the session"
+      - "It makes the parent's history visible to future subagents"
+    correct: [1]
+    explanation: "That is the attention-quality mechanism: filling the main conversation with raw evidence makes later instructions worse attended. Isolation keeps the parent dense in decisions, not evidence."
+  - id: exam-19
+    type: multi
+    prompt: "How does the final exam differ from the chapter quizzes?"
+    options:
+      - "It gives no per-question feedback while you answer"
+      - "It is one submit at the end, producing a single score and a pass/fail verdict"
+      - "Its pass mark is 80%, compared to 60% for chapter quizzes"
+      - "Answers can be revised after submitting"
+    correct: [0, 1, 2]
+    explanation: "Chapter quizzes grade per question with instant explanations; the exam stays silent until you submit everything, then judges the whole attempt against the 80% mark. Retakes are allowed — but answers cannot change after submit."
+  - id: exam-20
+    type: single
+    prompt: "A chapter counts as done in your progress when..."
+    options:
+      - "you reach the end of the lesson"
+      - "your chapter quiz scores 60% or higher"
+      - "every flashcard in the deck is marked 'Got it'"
+      - "you pass the final exam"
+    correct: [1]
+    explanation: "The bar is the quiz: scoring 60% or more automatically marks the chapter done. Flashcards and reading are recommended but never gate completion."
+  - id: exam-21
+    type: boolean
+    prompt: "Your course progress follows you when you switch to a different browser."
+    correct: false
+    explanation: "Progress lives in browser localStorage — per-browser and per-device. There is no account and no server, so a new browser starts from zero."
+  - id: exam-22
+    type: single
+    prompt: "Where does the course persist your progress?"
+    options:
+      - "In a server database tied to an account"
+      - "In your browser's localStorage, under the key 'subagents-course:progress:v1'"
+      - "In an encrypted cookie sent with every request"
+      - "In a file inside the course repository"
+    correct: [1]
+    explanation: "Everything is client-side localStorage under 'subagents-course:progress:v1' — nothing ever leaves your machine, and clearing the site's data resets it all."
+  - id: exam-23
+    type: boolean
+    prompt: "Retaking the final exam replaces your previously recorded exam result."
+    correct: true
+    explanation: "Retakes are free everywhere in this course. The progress store keeps a single exam result, and the newest attempt overwrites the old one."
+  - id: exam-24
+    type: multi
+    prompt: "Which of the 'a subagent is NOT' statements are correct?"
+    options:
+      - "Not a second conversation partner you chat with"
+      - "Not shared state with the parent"
+      - "Not always the right tool for a job"
+      - "Not able to run tools without approval for every single call"
+    correct: [0, 1, 2]
+    explanation: "The first three are the chapter's 'nots'. The fourth is wrong: a subagent selects and runs its own permitted tools autonomously, without round-tripping every step through the main conversation."
+  - id: exam-25
+    type: single
+    prompt: "A colleague asks why they should dispatch a subagent instead of just doing the search in the chat. The strongest answer?"
+    options:
+      - "Subagents are cheaper per token than the main conversation"
+      - "Isolation: the child burns its own tokens on its own fresh context, and only the conclusion comes back — so the main conversation stays small, focused, and trustworthy"
+      - "Subagents write better-formatted code"
+      - "The main conversation cannot use tools at all"
+    correct: [1]
+    explanation: "That is the chapter's closing answer, and it is all about isolation: the child's exploration never pollutes the parent's context, which keeps it small, dense in decisions, and reliable for everything that follows."
