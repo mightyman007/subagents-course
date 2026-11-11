@@ -45,6 +45,12 @@ export default function Home() {
           >
             &gt; take the final exam
           </Link>
+          <Link
+            href="/downloads"
+            className="rounded border border-line px-4 py-2 font-mono text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+          >
+            &gt; downloads
+          </Link>
           <span className="font-mono text-xs text-muted">no account · progress stays in your browser</span>
         </div>
       </main>

@@ -33,6 +33,14 @@ export default function LearnIndex() {
         </p>
       </header>
 
+      <p className="mt-4 text-sm text-muted">
+        Prefer spaced repetition outside the browser?{" "}
+        <Link href="/downloads" className="text-accent underline-offset-4 hover:underline">
+          Download the flashcards as an Anki deck
+        </Link>{" "}
+        — plus the agent templates.
+      </p>
+
       <ol className="mt-10 space-y-4">
         {chapters.map((chapter) => (
           <li key={chapter.meta.slug}>

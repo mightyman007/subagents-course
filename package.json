@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "validate": "vitest run tests/content"
+    "validate": "vitest run tests/content",
+    "export-anki": "if [ ! -x scripts/.venv/bin/python ]; then python3 -m venv scripts/.venv && scripts/.venv/bin/pip install --quiet genanki pyyaml; fi && scripts/.venv/bin/python scripts/export-anki.py"
   },
   "dependencies": {
     "gray-matter": "^4.0.3",

@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# anki exporter venv (bootstrap: python3 -m venv scripts/.venv && scripts/.venv/bin/pip install genanki pyyaml)
+scripts/.venv/
