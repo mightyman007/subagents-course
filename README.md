@@ -149,7 +149,8 @@ Components available inside chapter MDX: `<Mermaid>`, `<AnimatedDiagram>`, `<You
 ## Deployment
 
 - **Netlify** reads `netlify.toml`: build `pnpm build`, publish `out`. Pure static assets — no server functions.
-- The Netlify site is connected to this repo in the Netlify UI **after the Milestone 1 review passes** — so deploy previews of a broken site never go public.
+- **Live at <https://subagents-course.netlify.app>** — site `subagents-course` (project id `e8a6a591-7a1b-4e64-b6ba-11c8c802faf3`), deployed via Netlify CLI from `out/`.
+- Redeploying after content changes: run `pnpm build`, then `pnpm --package=netlify-cli dlx netlify deploy --prod --dir out --site e8a6a591-7a1b-4e64-b6ba-11c8c802faf3`. (To switch to auto-deploy-on-push instead, link the GitHub repo in the Netlify UI: Site configuration → Build & deploy.)
 - **GitHub is the source of truth**: `main` at `github.com/mightyman007/subagents-course`.
 - A **Gitea mirror** on `jpeezy-nas` is planned (remote `gitea`, likely `http://jpeezy-nas:3000`); not configured yet.
 
