@@ -1,0 +1,21 @@
+- id: c1
+  front: "F1"
+  back: "B1"
+  tags: ["core"]
+- id: c2
+  front: "F2"
+  back: "B2"
+- id: c3
+  front: "F3"
+  back: "B3"
+  tags: ["ops"]
+- id: c4
+  front: "F4"
+  back: "B4"
+- id: c5
+  front: "F5"
+  back: "B5"
+- id: c6
+  front: "F6"
+  back: "B6"
+  tags: ["core", "ops"]

@@ -1,0 +1,17 @@
+- id: q1
+  type: single
+  prompt: "Pick one"
+  options: ["a", "b", "c"]
+  correct: [0]
+  explanation: "Because a is the answer"
+- id: q2
+  type: multi
+  prompt: "Pick many"
+  options: ["x", "y", "z"]
+  correct: [0, 2]
+  explanation: "x and z are correct"
+- id: q3
+  type: boolean
+  prompt: "True or false?"
+  correct: true
+  explanation: "It is true"

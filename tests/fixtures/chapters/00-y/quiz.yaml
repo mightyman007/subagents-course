@@ -1,0 +1,17 @@
+- id: y1
+  type: single
+  prompt: "Y pick one"
+  options: ["a", "b"]
+  correct: [1]
+  explanation: "b is right"
+- id: y2
+  type: boolean
+  prompt: "Y true or false?"
+  correct: false
+  explanation: "It is false"
+- id: y3
+  type: multi
+  prompt: "Y pick many"
+  options: ["a", "b", "c", "d"]
+  correct: [1, 3]
+  explanation: "b and d"

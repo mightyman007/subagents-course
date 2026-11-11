@@ -1,0 +1,17 @@
+- id: ex1
+  type: single
+  prompt: "Exam single"
+  options: ["a", "b"]
+  correct: [1]
+  explanation: "b is right"
+- id: ex2
+  type: multi
+  prompt: "Exam multi"
+  options: ["a", "b", "c"]
+  correct: [1, 2]
+  explanation: "b and c"
+- id: ex3
+  type: boolean
+  prompt: "Exam boolean"
+  correct: false
+  explanation: "It is false"
