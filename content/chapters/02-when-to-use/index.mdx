@@ -1,0 +1,84 @@
+---
+title: "When to dispatch — and when not to"
+order: 2
+objectives:
+  - "Recognize the three work shapes that reward a dispatch: independent failure domains, parallelizable research, and context-heavy side tasks"
+  - "Name the situations where dispatching hurts: shared root causes, full-system context needs, shared files, and unformed debugging problems"
+  - "Route a concrete failure list through a decision flowchart to the right workers"
+  - "Explain why independence between fixes — not file boundaries — is the real test for splitting work"
+---
+
+Chapter 1 gave you the model: a child session, fresh context, one result back. Knowing *what* a subagent is does not tell you *when* to reach for one. Every dispatch is a trade — you spend coordination effort and accept that a worker sees only its brief, and in exchange you protect the main conversation and can run work in parallel. This chapter is the pattern-recognition layer: the shapes of work that reward a dispatch, the shapes that punish one, and a flowchart you can run mid-incident.
+
+## Three work shapes that reward a dispatch
+
+**1. Multiple independent failure domains.** Something is broken in several places at once, and the broken places don't talk to each other: a payments formatting bug here, a session-expiry bug there, a CLI parsing bug over there. Each domain has its own cause, its own fix, and its own tests. These are ideal dispatches precisely *because* they are independent — one worker per domain, all running at once, none of them needing to know the others exist.
+
+**2. Parallelizable research.** You need to survey things that don't depend on each other: how does our auth middleware work, what does the billing client expect, which of these three SDKs supports streaming? Each question is self-contained, each produces a pile of grep output and file reads you'll never want in your context, and each ends in a summary. This is the textbook fan-out: dispatch one worker per question, collect the summaries, synthesize.
+
+**3. Context-heavy side tasks.** The task's *output* is the problem, not its difficulty. Running the full test suite produces thousands of lines you will scan once for failures. Fetching a dependency's documentation dumps pages of prose you'll never reference again. A log sweep touches forty files. Dispatch these even when you could do them yourself — the win is not speed, it's isolation. The worker burns its context on the noise; your conversation receives only the distilled answer.
+
+<AnimatedDiagram kind="fanout" />
+
+## A worked example: six failures, three files
+
+Here is the scenario this chapter keeps returning to. A CI run comes back red with six failing tests spread across three files:
+
+- `payments/invoice.test.ts` — two failures, both about currency rounding on invoice totals
+- `auth/session.test.ts` — two failures, both about the token-refresh window
+- `cli/args.test.ts` — two failures, both about flag parsing of `--output`
+
+The tempting move is arithmetic: three files, three subagents, go. **That reasoning is wrong, and it's worth seeing exactly why.** File boundaries are not the test. The test is whether the *fixes* are independent — whether each cluster can be understood and repaired without knowing what the others are doing.
+
+Run the check on this example. The invoice failures live in one rounding helper that only the invoice code calls. The session failures live in a refresh-window constant only auth reads. The flag-parsing failures live in the CLI's own parser. Three clusters, three causes, three files that don't overlap: the fixes are genuinely independent, so three parallel diagnostic dispatches are the right call — each worker gets its file, the failing test names, and the instruction to report root cause plus proposed fix without editing anything.
+
+| Failure cluster | Domain | Shares a cause with the others? | Dispatch? |
+| --- | --- | --- | --- |
+| Invoice rounding ×2 | Payments formatting | No — isolated helper | Yes, one worker |
+| Token refresh ×2 | Auth session | No — own expiry window | Yes, one worker |
+| Flag parsing ×2 | CLI arguments | No — own parser | Yes, one worker |
+
+Now the counterfactual that makes this skill real. Suppose inspection shows the invoice rounding *and* the token-refresh failures both appeared the day someone changed a shared date-utility that both modules call. The file count is unchanged — still three files, still six tests — but the correct answer collapses to **zero dispatches**: one root cause, one fix, and the fix belongs in the main conversation, where the full picture of who calls what already lives. Three workers dispatched against that repo would each "fix" their local symptom, and the shared helper's real bug would survive all three reports.
+
+## The decision flowchart
+
+Run every dispatch decision through these gates, in order:
+
+<Mermaid
+  chart={`
+graph TD
+  S["A task or a pile of failures"] --> Q1{"Do the pieces share a plausible root cause?"}
+  Q1 -->|"yes"| MAIN["One problem: work in the main conversation, where full context lives"]
+  Q1 -->|"no"| Q2{"Would parallel workers edit the same files or shared state?"}
+  Q2 -->|"yes"| SEQ["Serialize the work or partition the files first"]
+  Q2 -->|"no"| Q3{"Can you state each piece as a self-contained brief?"}
+  Q3 -->|"yes"| DISP["Dispatch one worker per piece — in parallel"]
+  Q3 -->|"no"| EXPLORE["Explore in the main conversation until you can state the problem, then dispatch"]
+`}
+/>
+
+The gates are ordered on purpose. Root-cause independence comes first because it's the gate people skip and the one that produces the worst failures — a team of workers confidently fixing symptoms around a single disease. File collisions come second because they're cheap to check and catastrophic to ignore. Only when a piece of work passes both does the third question matter: can you actually *write* the brief?
+
+## When NOT to dispatch
+
+The negative cases deserve their own table, because each one fails differently:
+
+| Situation | Why a dispatch hurts here | Do instead |
+| --- | --- | --- |
+| Failures that share a root cause | Each worker fixes a symptom in isolation; the fixes fight each other or stack up around the real bug | Debug once in the main conversation, where the whole picture lives |
+| The task needs full-system context | A fresh child knows only its brief; it re-derives — or mis-derives — context you already hold | Keep it in the main conversation, or accept that writing the complete dispatch *is* the task |
+| Workers would edit the same files or shared state | Parallel edits collide; last writer wins; one fix overwrites another | Serialize the dispatches, partition the files up front, or do the edits in one place |
+| Exploratory debugging — you don't know what's broken yet | You cannot write a brief for a problem you cannot state; the child burns its budget rediscovering the bug's shape | Explore in the main conversation until the problem is stated, then dispatch the repair |
+| Tight iterative back-and-forth with you | A one-shot worker can't ask you questions mid-task | Stay in the main conversation (Chapter 1's "not a conversation partner") |
+
+Notice the pattern in the last row, because it's the one that catches experienced people. A subagent is a **one-shot worker: one brief in, one result out**. The moment a task requires *you* in the loop — clarifying scope, judging half-finished output, redirecting between steps — the dispatch boundary works against you. The exploration phase of debugging is exactly that kind of work, which is why "explore first, dispatch after" is its own node in the flowchart rather than a footnote.
+
+## The mixed case is normal
+
+Real incidents rarely arrive pre-sorted into "dispatch" and "don't." A realistic outcome of the six-failure example is: the auth cluster turns out to share a root cause with a deployment-config change, while payments and CLI stay independent. Fine — the flowchart handles mixed input, because you run it *per cluster*, not per incident. Dispatch the two independent domains in parallel; take the entangled one into the main conversation yourself. The skill isn't sorting whole incidents into one bucket; it's sorting *work items*, and work items can come from the same pile.
+
+<YouTubeEmbed id="e18sdZLwP7o" title="How to Build Claude Subagents Better Than 99% of People" />
+
+## What you should now be able to say
+
+If a colleague says "the suite is red, should I spawn subagents?", your answer should be a question back: *are the fixes independent?* Independent clusters across disjoint files are a green light for a parallel fan-out — and verbose, self-contained side tasks are worth dispatching even solo, for the isolation alone. Shared root causes, full-system context, overlapping files, and problems you can't yet state are the red flags: keep those in the main conversation. Next chapter makes this concrete in OpenCode, starting with the agents you already have installed.

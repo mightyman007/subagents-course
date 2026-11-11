@@ -1,11 +1,12 @@
 # Final exam — Subagents Mastery.
 #
 # Ships in Task 8 with questions drawn from Chapters 0-1 material (plus
-# foundational subagent concepts). Tasks 9-10 will each APPEND >=3
-# chapter-specific questions as their chapters land, and Task 14 verifies the
-# exam spans the whole course — so the exam page is fully data-driven: never
-# assume a fixed question count beyond the validator minimum (>=20, enforced
-# by loadExam). Every question must carry a non-empty explanation.
+# foundational subagent concepts). Task 9 appends chapter-specific questions as
+# its chapters land: exam-26..29 cover Chapter 2 (when to dispatch), and more
+# batches follow for Chapters 3-4. Task 14 verifies the exam spans the whole
+# course — so the exam page is fully data-driven: never assume a fixed question
+# count beyond the validator minimum (>=20, enforced by loadExam). Every
+# question must carry a non-empty explanation.
 passMarkPercent: 80
 questions:
   - id: exam-01
@@ -223,3 +224,38 @@ questions:
       - "The main conversation cannot use tools at all"
     correct: [1]
     explanation: "That is the chapter's closing answer, and it is all about isolation: the child's exploration never pollutes the parent's context, which keeps it small, dense in decisions, and reliable for everything that follows."
+  - id: exam-26
+    type: single
+    prompt: "A CI run leaves six failing tests in three files. Inspection suggests the invoice-rounding AND token-refresh failures both appeared when a shared date utility changed. Correct handling?"
+    options:
+      - "Dispatch three subagents — one per file — and merge their fixes"
+      - "Treat it as ONE problem with a shared root cause: fix the utility in the main conversation, dispatch nothing"
+      - "Dispatch two subagents with instructions to coordinate with each other"
+      - "Dispatch one subagent per failing test"
+    correct: [1]
+    explanation: "The independence test is about the FIXES, not the files. A shared root cause means the clusters are one problem needing full-system context; parallel workers would each patch a local symptom while the shared utility's real bug survives."
+  - id: exam-27
+    type: multi
+    prompt: "Which work shapes reward dispatching subagents?"
+    options:
+      - "Three failure domains, each with its own cause and its own fix"
+      - "Research questions that don't depend on each other, each ending in a summary"
+      - "A task whose output is thousands of lines you will scan once and never reuse"
+      - "A change that needs your judgment between each intermediate step"
+    correct: [0, 1, 2]
+    explanation: "Independent failure domains, parallelizable research, and context-heavy side tasks are the three green lights. Work needing tight iterative back-and-forth with you stays in the main conversation — a one-shot worker can't ask you questions mid-task."
+  - id: exam-28
+    type: single
+    prompt: "Two planned subagent fixes would both edit the same migration file. What is the correct call?"
+    options:
+      - "Run both in the background and reconcile the file afterwards"
+      - "Run both in parallel — each subagent's context isolation prevents collisions"
+      - "Serialize the dispatches or partition the files up front"
+      - "Context isolation makes file edits conflict-free, so it doesn't matter"
+    correct: [2]
+    explanation: "Isolation separates CONTEXT, not the filesystem. Parallel edits to one file collide and last-writer-wins; the remedies are serialization or an up-front partition of the files."
+  - id: exam-29
+    type: boolean
+    prompt: "Dispatching one subagent per failing FILE is the correct way to parallelize a broken test suite."
+    correct: false
+    explanation: "That is arithmetic, not analysis. First ask whether the clusters share a plausible root cause; only independent domains with disjoint files justify a parallel fan-out. Shared cause → one fix in the main conversation, zero dispatches."

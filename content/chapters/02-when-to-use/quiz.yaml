@@ -1,0 +1,41 @@
+# Chapter 2 quiz — when to dispatch, and when not to.
+- id: c2-q1
+  type: boolean
+  prompt: "Six test failures across three files always mean three independent subagent dispatches — one per file."
+  correct: false
+  explanation: "File boundaries are not the test — independence between FIXES is. If two clusters trace to one shared helper or one recent change, that is a single problem needing full-system context, best fixed in the main conversation with zero dispatches."
+- id: c2-q2
+  type: single
+  prompt: "Which task most rewards fanning out several subagents at once?"
+  options:
+    - "Surveying three independent modules — auth, billing, and the CLI — for how each handles retries"
+    - "Refactoring one function with you reviewing each intermediate version"
+    - "Debugging a crash whose cause you cannot yet describe"
+    - "Applying a one-line fix to a single file"
+  correct: [0]
+  explanation: "Independent, self-contained research questions are the textbook fan-out: one worker per question, summaries collected and synthesized. The other three need iteration, an unstated problem statement, or neither — main-conversation work."
+- id: c2-q3
+  type: multi
+  prompt: "Which of these are signs you should NOT dispatch a subagent?"
+  options:
+    - "The failing tests all likely trace to one recent change"
+    - "Two would-be workers would both edit the same migration file"
+    - "You need to scan three independent SDK documentation sites"
+    - "The task will dump thousands of log lines you will never reference again"
+  correct: [0, 1]
+  explanation: "A shared root cause and overlapping files are both red flags — the fixes would collide or fight around one disease. The last two are green lights: parallelizable research, and a context-heavy side task whose real cost is the noise it keeps out of your context."
+- id: c2-q4
+  type: single
+  prompt: "Something is broken but you can't yet state what — symptoms point everywhere. What's the right move?"
+  options:
+    - "Dispatch three debugging subagents with whatever brief you can improvise"
+    - "Explore in the main conversation until you can state the problem, then dispatch the repair work"
+    - "Ask a subagent to 'fix the failing tests'"
+    - "Dispatch one subagent per symptom, then merge the reports"
+  correct: [1]
+  explanation: "You cannot write a brief for a problem you cannot state — an unformed dispatch just relocates the confusion into a child that can't ask you questions. Explore where context accumulates; dispatch only once each work item is self-contained."
+- id: c2-q5
+  type: boolean
+  prompt: "A context-heavy side task — like running a test suite that prints thousands of lines — is worth dispatching even when the fix itself will happen in the main conversation."
+  correct: true
+  explanation: "The win is isolation, not speed: the worker burns its own context on the verbose output and returns only the distilled answer — say, the failing tests with their errors. Your conversation stays dense in decisions instead of evidence."

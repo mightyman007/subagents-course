@@ -1,0 +1,33 @@
+# Chapter 2 flashcards — the dispatch decision.
+- id: c2-f1
+  front: "Name the three work shapes that reward a dispatch."
+  back: "1) Multiple independent failure domains. 2) Parallelizable research. 3) Context-heavy side tasks — dispatched for isolation even when you could do them solo."
+  tags: [core]
+- id: c2-f2
+  front: "What is the real test for splitting failures across subagents?"
+  back: "Independence of the FIXES — not file count, not test count. If clusters share a plausible root cause, it's one problem for the main conversation."
+  tags: [core]
+- id: c2-f3
+  front: "Name the four 'when NOT to dispatch' situations."
+  back: "1) Failures sharing a root cause. 2) Work needing full-system context. 3) Workers that would edit the same files or shared state. 4) Exploratory debugging where you can't yet state the problem."
+  tags: [core]
+- id: c2-f4
+  front: "Why do parallel dispatches that edit the same files fail?"
+  back: "Context isolation does not isolate the filesystem: parallel edits collide, last writer wins, and one fix can overwrite another. Serialize the dispatches or partition the files first."
+  tags: [core]
+- id: c2-f5
+  front: "What's the rule for exploratory debugging?"
+  back: "Explore in the main conversation until you can STATE the problem, then dispatch the repair. You can't write a brief for a problem you can't articulate — and the child can't ask you questions."
+  tags: [core]
+- id: c2-f6
+  front: "Why dispatch a context-heavy side task you could easily do yourself?"
+  back: "Isolation, not speed. The worker's context absorbs the thousands of lines of output; only the distilled result — the failing tests, the one relevant doc paragraph — reaches the main conversation."
+  tags: [core]
+- id: c2-f7
+  front: "What does a wrongly-split dispatch actually cost?"
+  back: "Workers fix symptoms in isolation around one shared disease: fixes fight or stack, the real bug survives every report, and you pay coordination overhead on top."
+  tags: [core]
+- id: c2-f8
+  front: "What is the FIRST gate in the dispatch decision flowchart?"
+  back: "\"Do the pieces share a plausible root cause?\" Yes → one problem, main conversation. No → check for file/shared-state collisions, then check whether each piece is stateable as a brief."
+  tags: [core]
