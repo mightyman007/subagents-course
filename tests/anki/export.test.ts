@@ -45,6 +45,27 @@ interface DryRunReport {
   notes: DryRunNote[];
 }
 
+/** Note fields emitted by `--inspect` (re-derived from a committed .apkg). */
+interface InspectNote {
+  guid: string;
+  front: string;
+  back: string;
+  deck: string;
+}
+
+interface InspectReport extends Omit<DryRunReport, "notes" | "emptyFields"> {
+  notes: InspectNote[];
+}
+
+/** The (guid, front, back, deck) tuples both report shapes share, guid-sorted. */
+function canonicalNotes(
+  notes: Array<{ guid: string; front: string; back: string; deck: string }>,
+): Array<{ guid: string; front: string; back: string; deck: string }> {
+  return [...notes]
+    .sort((a, b) => (a.guid < b.guid ? -1 : a.guid > b.guid ? 1 : 0))
+    .map(({ guid, front, back, deck }) => ({ guid, front, back, deck }));
+}
+
 /** Ground truth read straight from the content files (independent of Python). */
 interface ChapterFile {
   slug: string;
@@ -96,6 +117,15 @@ function dryRun(): DryRunReport {
     throw new Error(`export-anki.py --dry-run failed (${res.status}):\n${res.stderr}`);
   }
   return JSON.parse(String(res.stdout)) as DryRunReport;
+}
+
+/** Read-only re-derivation of deck data from a committed .apkg (zip + sqlite). */
+function inspectPackage(apkgPath: string): InspectReport {
+  const res = runExport(["--inspect", apkgPath]);
+  if (res.status !== 0) {
+    throw new Error(`export-anki.py --inspect failed (${res.status}):\n${res.stderr}`);
+  }
+  return JSON.parse(String(res.stdout)) as InspectReport;
 }
 
 describe("anki export — deck data (--dry-run)", () => {
@@ -159,18 +189,32 @@ describe("anki export — deck data (--dry-run)", () => {
 
 describe("anki export — content drift guard", () => {
   /**
-   * Task 12 corrected two flashcards (c0-f4 exam wording, c2-f3 "Name three of…")
-   * after an older .apkg had already been committed; the stale deck shipped the
-   * old wording. These pins catch yaml/deck drift at the data layer: the deck
-   * data must carry the corrected strings and never the stale ones.
+   * PRIMARY guard: the COMMITTED .apkg must equal the yaml-derived deck data.
    *
-   * Stale strings are pinned EXACTLY (not as the bare "Name the four"), because
-   * three legitimate cards legitimately start with "Name the four" (c5-f1,
-   * c5-f2, c6-f1) — a bare-pin ban would permanently fail on real content.
-   * Exact stale wording extracted from the old package's sqlite (guid-addressed)
-   * before regeneration.
+   * Why: a guard that only reads --dry-run always sees fresh YAML, so a stale
+   * committed package still passes green (that defect shipped once: Task 12
+   * corrected c0-f4/c2-f3 wording after an older .apkg had been committed).
+   * Comparing --inspect (re-derived from the committed package, read-only) to
+   * --dry-run is pin-free: ANY yaml edit without re-export makes the sets
+   * differ and fails here.
+   *
+   * SECONDARY: the Task 12 text pins stay on the dry-run data as an explicit
+   * regression record of that specific fix.
+   *
+   * Stale pins are EXACT (not the bare "Name the four"): three legitimate
+   * cards start with "Name the four" — c5-f1, c5-f6, c6-f5 — so a bare-pin ban
+   * would permanently fail on real content.
    */
-  it("carries the Task 12 corrected wording, never the stale wording", () => {
+  it("committed .apkg equals the yaml-derived deck data (no drift)", () => {
+    const expected = dryRun();
+    const actual = inspectPackage(APKG);
+    expect(actual.totalNotes).toBe(expected.totalNotes);
+    const counts = (decks: DryRunDeck[]) => Object.fromEntries(decks.map((d) => [d.name, d.notes]));
+    expect(counts(actual.decks)).toEqual(counts(expected.decks));
+    expect(canonicalNotes(actual.notes)).toEqual(canonicalNotes(expected.notes));
+  });
+
+  it("dry-run data carries the Task 12 corrected wording, never the stale wording", () => {
     const report = dryRun();
     const deckText = report.notes.map((n) => `${n.front}\n${n.back}`).join("\n");
     // corrected c2-f3 front / c0-f4 back

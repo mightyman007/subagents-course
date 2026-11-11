@@ -20,6 +20,13 @@ Data hygiene (checked for every run, both modes):
 Modes:
 - `--dry-run`: print the deck data as JSON on stdout (and exit 1 if the data
   is dirty — empty fields or duplicate ids), write nothing.
+- `--inspect <path.apkg>`: READ-ONLY re-derivation of deck data from a
+  committed package — opens the zip, loads collection.anki2 into an
+  in-memory sqlite (no file writes, the package is never modified), and
+  prints the same JSON note shape as --dry-run ({parentDeck, totalNotes,
+  decks, notes: [{guid, front, back, deck}, ...]}). Fields are split from
+  notes.flds on the Anki field separator \x1f in model order Front/Back/Tags;
+  the note→deck mapping comes from cards.did via the col.decks JSON.
 - default: package `public/downloads/subagents-course.apkg`, print a summary.
 
 Toolchain: Python 3 + genanki (+ pyyaml) in a project-local venv:
@@ -32,8 +39,10 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sqlite3
 import sys
 import zlib
+import zipfile
 from pathlib import Path
 
 import genanki
@@ -161,6 +170,58 @@ def build_report(chapters: list[tuple[dict, list[dict]]]) -> dict:
     }
 
 
+FIELD_SEPARATOR = "\x1f"  # Anki's notes.flds separator; model order: Front, Back, Tags
+
+
+def inspect_package(apkg_path: Path) -> dict:
+    """Re-derive deck data from a committed .apkg. READ-ONLY: the zip is read
+    and collection.anki2 is loaded into an in-memory sqlite database — the
+    package (and everything else on disk) is never written to."""
+    if not apkg_path.exists():
+        fail(f"{apkg_path}: no such file")
+    with zipfile.ZipFile(apkg_path) as archive:
+        if "collection.anki2" not in archive.namelist():
+            fail(f"{apkg_path}: not an Anki package (missing collection.anki2)")
+        payload = archive.read("collection.anki2")
+
+    con = sqlite3.connect(":memory:")
+    con.deserialize(payload)
+
+    deck_names = {
+        int(deck_id): info["name"]
+        for deck_id, info in json.loads(con.execute("SELECT decks FROM col").fetchone()[0]).items()
+    }
+    notes: list[dict] = []
+    per_deck: dict[str, int] = {}
+    for guid, flds, deck_id in con.execute(
+        "SELECT n.guid, n.flds, c.did FROM notes n JOIN cards c ON c.nid = n.id"
+    ):
+        fields = flds.split(FIELD_SEPARATOR)
+        if len(fields) != 3:
+            fail(
+                f"{apkg_path}: note {guid!r} has {len(fields)} fields, expected 3 "
+                f"(model order Front/Back/Tags) — was the model changed?"
+            )
+        front, back, _tags = fields
+        deck_name = deck_names.get(int(deck_id))
+        if deck_name is None:
+            fail(f"{apkg_path}: card for note {guid!r} points at unknown deck id {deck_id}")
+        # Report shape parity with --dry-run: chapter decks only (the parent and
+        # Anki's Default hold no cards).
+        if deck_name == DECK_ROOT or deck_name == "Default":
+            continue
+        per_deck[deck_name] = per_deck.get(deck_name, 0) + 1
+        notes.append({"guid": guid, "front": front, "back": back, "deck": deck_name})
+    con.close()
+
+    return {
+        "parentDeck": DECK_ROOT,
+        "totalNotes": len(notes),
+        "decks": [{"name": name, "notes": count} for name, count in sorted(per_deck.items())],
+        "notes": sorted(notes, key=lambda n: n["guid"]),
+    }
+
+
 def package_deck(report: dict, out_path: Path) -> None:
     if report["emptyFields"]:
         fail(f"refusing to package: empty fields in {report['emptyFields']}")
@@ -207,8 +268,18 @@ def main() -> None:
         action="store_true",
         help="print deck data as JSON (no packaging); exit 1 if the data is dirty",
     )
+    parser.add_argument(
+        "--inspect",
+        type=Path,
+        metavar="PATH.APKG",
+        help="read-only: print deck data re-derived from a committed .apkg as JSON",
+    )
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="output .apkg path")
     args = parser.parse_args()
+
+    if args.inspect is not None:
+        print(json.dumps(inspect_package(args.inspect), indent=2))
+        return
 
     report = build_report(load_chapters())
 
