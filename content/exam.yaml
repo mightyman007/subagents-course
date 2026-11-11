@@ -84,7 +84,7 @@ questions:
       - "Constraints such as read-only, a time budget, or an output format"
       - "A copy of the parent's full conversation history"
     correct: [0, 1, 2]
-    explanation: "A dispatch is task + context + constraints. The parent's history is never copied over — the child starts fresh by design, which is where the isolation benefits come from."
+    explanation: "A dispatch is task + context + constraints, plus the output contract Chapter 5 formalizes as the fourth part of the brief. The parent's history is never copied over — the child starts fresh by design, which is where the isolation benefits come from."
   - id: exam-09
     type: single
     prompt: "In which dispatch mode does the subagent's result arrive as the next beat of the same conversation?"
