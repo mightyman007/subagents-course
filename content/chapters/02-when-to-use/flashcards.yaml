@@ -8,8 +8,8 @@
   back: "Independence of the FIXES — not file count, not test count. If clusters share a plausible root cause, it's one problem for the main conversation."
   tags: [core]
 - id: c2-f3
-  front: "Name the four 'when NOT to dispatch' situations."
-  back: "1) Failures sharing a root cause. 2) Work needing full-system context. 3) Workers that would edit the same files or shared state. 4) Exploratory debugging where you can't yet state the problem."
+  front: "Name three of the 'when NOT to dispatch' situations."
+  back: "1) Failures sharing a root cause. 2) Work needing full-system context. 3) Workers that would edit the same files or shared state. 4) Exploratory debugging where you can't yet state the problem. 5) Tight iterative back-and-forth that needs you in the loop."
   tags: [core]
 - id: c2-f4
   front: "Why do parallel dispatches that edit the same files fail?"

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { FlashcardDeck } from "@/components/flashcard-deck";
 import { shuffleSeeded } from "@/lib/deck";
 import type { Flashcard } from "@/lib/content/schema";
@@ -150,5 +150,97 @@ describe("FlashcardDeck", () => {
     render(<FlashcardDeck cards={[]} deckId="deck-1" />);
     expect(screen.getByText("[empty] no cards")).toBeInTheDocument();
     expect(screen.queryByRole("button")).toBeNull();
+  });
+});
+
+describe("FlashcardDeck initialMarks", () => {
+  it("rehydrates persisted marks into the counts, without jumping position", async () => {
+    render(
+      <FlashcardDeck cards={cards} deckId="deck-1" initialMarks={{ c1: "gotit", c2: "again" }} />,
+    );
+
+    await waitFor(() => expect(screen.getByText("2/4")).toBeInTheDocument());
+    expect(screen.getByText("1 got it")).toBeInTheDocument();
+    expect(screen.getByText("1 again")).toBeInTheDocument();
+    // Position is NOT persisted by design: the deck still opens on card 1
+    // (the seed-1 first card), not at the furthest-marked card.
+    expect(screen.getByRole("button", { name: cardAt(0).front })).toBeInTheDocument();
+  });
+
+  it("ignores marks for ids outside the deck (stale persisted marks can't inflate counts)", async () => {
+    render(
+      <FlashcardDeck
+        cards={cards}
+        deckId="deck-1"
+        initialMarks={{ c1: "gotit", foreign: "gotit" }}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText("1/4")).toBeInTheDocument());
+    expect(screen.getByText("1 got it")).toBeInTheDocument();
+    expect(screen.getByText("0 again")).toBeInTheDocument();
+  });
+
+  it("undefined initialMarks keeps current behavior: zero counts, marks begin empty", () => {
+    const onMark = vi.fn();
+    render(<FlashcardDeck cards={cards} deckId="deck-1" onMark={onMark} />);
+
+    expect(screen.getByText("0/4")).toBeInTheDocument();
+    expect(screen.getByText("0 again")).toBeInTheDocument();
+    expect(screen.getByText("0 got it")).toBeInTheDocument();
+
+    flipAndMark("front four", "Got it"); // c4 = seed-1 first card
+    expect(screen.getByText("1/4")).toBeInTheDocument();
+    expect(screen.getByText("1 got it")).toBeInTheDocument();
+    expect(onMark).toHaveBeenCalledTimes(1);
+  });
+
+  it("a fully-marked rehydrated deck shows the summary; Restart resets and marks never resurrect", async () => {
+    const onMark = vi.fn();
+    const allMarked = { c1: "gotit", c2: "gotit", c3: "again", c4: "gotit" } as const;
+    const { rerender } = render(
+      <FlashcardDeck cards={cards} deckId="deck-1" onMark={onMark} initialMarks={allMarked} />,
+    );
+
+    await waitFor(() => expect(screen.getByText("[done] deck complete")).toBeInTheDocument());
+    expect(screen.getByText("3 got it")).toBeInTheDocument();
+    expect(screen.getByText("1 again")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Restart" }));
+    expect(screen.getByText("0/4")).toBeInTheDocument();
+    expect(screen.getByText("0 again")).toBeInTheDocument();
+    expect(screen.getByText("0 got it")).toBeInTheDocument();
+
+    // The bridge re-renders on every persisted mark, handing the deck a fresh
+    // initialMarks object with the same content. The merge happens exactly
+    // once per mount (on hydration) — never again, so a post-restart render
+    // must not resurrect the persisted marks.
+    rerender(
+      <FlashcardDeck cards={cards} deckId="deck-1" onMark={onMark} initialMarks={{ ...allMarked }} />,
+    );
+    // Give any (buggy) deferred merge a microtask to fire in, then assert it didn't.
+    await act(async () => {});
+    expect(screen.getByText("0/4")).toBeInTheDocument();
+    expect(screen.getByText("0 again")).toBeInTheDocument();
+    expect(screen.getByText("0 got it")).toBeInTheDocument();
+  });
+
+  it("rehydrated marks still count toward a fresh pass (local marks win on top)", async () => {
+    const onMark = vi.fn();
+    render(
+      <FlashcardDeck cards={cards} deckId="deck-1" onMark={onMark} initialMarks={{ c3: "gotit" }} />,
+    );
+    await waitFor(() => expect(screen.getByText("1/4")).toBeInTheDocument());
+    expect(screen.getByText("1 got it")).toBeInTheDocument();
+
+    flipAndMark("front four", "Got it"); // c4 = seed-1 first card
+    flipAndMark("front two", "Again"); // c2 = seed-1 second card
+
+    expect(onMark).toHaveBeenCalledTimes(2);
+    expect(onMark).toHaveBeenNthCalledWith(1, "c4", "gotit");
+    expect(onMark).toHaveBeenNthCalledWith(2, "c2", "again");
+    expect(screen.getByText("3/4")).toBeInTheDocument();
+    expect(screen.getByText("2 got it")).toBeInTheDocument();
+    expect(screen.getByText("1 again")).toBeInTheDocument();
   });
 });

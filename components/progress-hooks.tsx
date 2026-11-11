@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import type { Flashcard, Question } from "@/lib/content/schema";
 import { Quiz } from "@/components/quiz";
 import { FlashcardDeck } from "@/components/flashcard-deck";
@@ -12,7 +13,11 @@ import {
   markChapterDone,
   markCard,
   CHAPTER_DONE_PERCENT,
+  EXAM_READY_CHAPTERS,
+  courseDonePercent,
+  type CardMark,
   type Progress,
+  type QuizResult,
 } from "@/lib/progress";
 
 /**
@@ -111,11 +116,20 @@ interface DeckProgressBridgeProps {
 
 /**
  * `<FlashcardDeck>` wired to real progress: every mark is recorded per card
- * id. Shows how many of this deck's cards carry a mark from earlier runs.
+ * id, and the deck's persisted marks rehydrate into its counts on load.
+ * Shows how many of this deck's cards carry a mark from earlier runs.
  */
 export function DeckProgressBridge({ deckId, cards }: DeckProgressBridgeProps) {
   const { progress, update, latest } = useProgress();
   const marked = cards.filter((c) => progress.cards[c.id] !== undefined).length;
+
+  // Persisted marks for THIS deck's cards only (marks from other decks and
+  // stale ids are filtered out) — the deck merges them on hydration.
+  const initialMarks: Record<string, CardMark> = {};
+  for (const card of cards) {
+    const mark = progress.cards[card.id];
+    if (mark !== undefined) initialMarks[card.id] = mark;
+  }
 
   return (
     <div className="space-y-3" data-deck-progress={deckId}>
@@ -127,6 +141,7 @@ export function DeckProgressBridge({ deckId, cards }: DeckProgressBridgeProps) {
       <FlashcardDeck
         cards={cards}
         deckId={deckId}
+        initialMarks={initialMarks}
         onMark={(cardId, mark) => {
           update(markCard(latest.current, cardId, mark));
         }}
@@ -163,5 +178,75 @@ export function DoneMarker({ chapterId }: { chapterId: string }) {
     <span data-done={chapterId} className="font-mono text-xs text-muted">
       {state === "unknown" ? "—" : "pending"}
     </span>
+  );
+}
+
+/**
+ * Overall course progress bar for the course index: chapters done, as an
+ * integer percent of the whole course (floored, per courseDonePercent).
+ * Hydration-safe by this file's binding rule — the initial render is the
+ * deterministic empty state (0 done / 0%) and the stored count is read in a
+ * mount effect. Once at least EXAM_READY_CHAPTERS chapters are done, a subtle
+ * hint links to the final exam.
+ */
+export function OverallProgress({ totalChapters }: { totalChapters: number }) {
+  const [done, setDone] = useState<number | null>(null);
+
+  useEffect(() => {
+    // Resolve outside the synchronous effect body (react-hooks/set-state-in-effect).
+    void Promise.resolve().then(() => {
+      setDone(loadProgress().chaptersDone.length);
+    });
+  }, []);
+
+  const chaptersDone = done ?? 0;
+  const percent = courseDonePercent(chaptersDone, totalChapters);
+  const examReady = done !== null && chaptersDone >= EXAM_READY_CHAPTERS;
+
+  return (
+    <div data-overall-progress className="rounded-lg border border-line p-4">
+      <div className="flex items-center justify-between font-mono text-xs text-muted">
+        <span>{chaptersDone}/{totalChapters} chapters done</span>
+        <span data-percent={percent}>{percent}%</span>
+      </div>
+      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-line">
+        <div
+          className="h-full rounded-full bg-accent transition-[width] duration-300"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+      {examReady && (
+        <p className="mt-3 font-mono text-xs text-accent">
+          <Link href="/exam" className="underline-offset-4 hover:underline">
+            &gt; ready for the exam
+          </Link>
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Per-chapter recorded quiz score for the course index — shown once the store
+ * resolves, and only when an attempt exists. Renders nothing before that
+ * (deterministic server and first-client render, then a one-time update; no
+ * hydration mismatch).
+ */
+export function RecordedQuizScore({ chapterId }: { chapterId: string }) {
+  const [recorded, setRecorded] = useState<QuizResult | null | "unknown">("unknown");
+
+  useEffect(() => {
+    // Resolve outside the synchronous effect body (react-hooks/set-state-in-effect).
+    void Promise.resolve().then(() => {
+      setRecorded(loadProgress().quizzes[chapterId] ?? null);
+    });
+  }, [chapterId]);
+
+  if (recorded === "unknown" || recorded === null) return null;
+  return (
+    <p data-recorded-score={chapterId} className="font-mono text-xs text-muted">
+      [saved] last attempt: {recorded.score}/{recorded.total} ·{" "}
+      {recorded.total > 0 ? Math.round((recorded.score / recorded.total) * 100) : 0}%
+    </p>
   );
 }

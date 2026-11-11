@@ -99,7 +99,7 @@ questions:
     type: boolean
     prompt: "Background dispatch is how you run genuinely parallel work — several independent investigations at once."
     correct: true
-    explanation: "Background subagents run while the parent (and you) keep working; you collect the results later. Foreground is the simple default; background trades bookkeeping for parallelism."
+    explanation: "Background subagents run while the parent (and you) keep working; you collect the results later — that is what makes parallel work possible. Foreground is the simpler mental model; note that Claude Code spawns background by default."
   - id: exam-11
     type: single
     prompt: "Which sentence captures the foreground/background trade-off?"

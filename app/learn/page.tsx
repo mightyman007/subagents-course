@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { loadChapterSlugs, loadChapter } from "@/lib/content/load";
-import { DoneMarker } from "@/components/progress-hooks";
+import { DoneMarker, OverallProgress, RecordedQuizScore } from "@/components/progress-hooks";
 import { CHAPTER_DONE_PERCENT } from "@/lib/progress";
 
 /**
  * Course index: one card per chapter, built entirely at build time from the
  * content loaders (no separate metadata loader — loadChapter provides meta,
- * quiz size and deck size). Completion state is per-browser, so the done
- * marker is the one client-side piece here (see DoneMarker).
+ * quiz size and deck size). Completion state is per-browser, so the overall
+ * progress bar, per-chapter scores and done markers are the client-side
+ * pieces here (see OverallProgress, RecordedQuizScore, DoneMarker).
  */
 export default function LearnIndex() {
   const slugs = loadChapterSlugs();
@@ -24,14 +25,19 @@ export default function LearnIndex() {
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted">
           Work through the chapters in order — each builds on the last. Score{" "}
-          {CHAPTER_DONE_PERCENT}% or higher on a chapter quiz to mark it done. Across the course:
-          {chapters.length} chapters, {quizTotal} quiz questions, {cardTotal} flashcards, and{" "}
+          {CHAPTER_DONE_PERCENT}% or higher on a chapter quiz to mark it done. The course holds{" "}
+          {chapters.length} chapters, {quizTotal} quiz questions, and {cardTotal} flashcards, and
+          it finishes with{" "}
           <Link href="/exam" className="text-accent underline-offset-4 hover:underline">
             a final exam
           </Link>
           .
         </p>
       </header>
+
+      <div className="mt-6">
+        <OverallProgress totalChapters={chapters.length} />
+      </div>
 
       <p className="mt-4 text-sm text-muted">
         Prefer spaced repetition outside the browser?{" "}
@@ -59,6 +65,7 @@ export default function LearnIndex() {
                 {chapter.meta.objectives.length} objectives · {chapter.quiz.length} quiz
                 questions · {chapter.flashcards.length} flashcards
               </p>
+              <RecordedQuizScore chapterId={chapter.meta.slug} />
             </Link>
           </li>
         ))}

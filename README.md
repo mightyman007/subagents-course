@@ -10,8 +10,15 @@ Fully static site (Next.js App Router, `output: "export"`). Every quiz score and
 |---|-------|-------|
 | 0 | How to use this course | Chapter anatomy, quizzes and decks, where progress lives |
 | 1 | What are subagents | Child sessions with fresh context, why the main context stays protected |
+| 2 | When to dispatch — and when not to | The three gates, the when-NOT table, brief-first thinking |
+| 3 | OpenCode: built-ins and custom agents | The built-in agents, agent Markdown files, permissions |
+| 4 | Claude Code: subagent files and built-ins | Agent files and scopes, model resolution, background by default |
+| 5 | Crafting dispatches: the four-part brief | Scope, context, constraints, output contract |
+| 6 | Parallel dispatch: the fan-out pattern | Independent domains, one agent per domain, writing isolated briefs |
+| 7 | Subagent-driven development | The orchestrator loop: implement, review, bounded fix rounds, ledger |
+| 8 | Recipes: dispatches you can paste | Four complete copy-paste dispatches and what to verify on return |
 
-Chapters live in `content/chapters/` and render at `/learn/<slug>`, listed in order at `/learn`.
+Chapters live in `content/chapters/` and render at `/learn/<slug>`, listed in order at `/learn` (with overall progress, per-chapter scores, and done markers from localStorage).
 
 ## Stack
 
@@ -148,16 +155,24 @@ Components available inside chapter MDX: `<Mermaid>`, `<AnimatedDiagram>`, `<You
 
 ## Repo layout
 
-- `app/` — routes: `/` (landing), `/learn` (course index with progress state), `/learn/[slug]` (chapter page)
+- `app/` — routes: `/` (landing), `/learn` (course index with progress state), `/learn/[slug]` (chapter page), `/exam` (final exam), `/downloads` (Anki deck + agent templates)
 - `components/` — `chapter-layout` (MDX render path + page shell), quiz, flashcard deck, progress bridges, media (mermaid, animated diagram, YouTube, placeholder), exam
-- `content/` — chapters per the layout above
-- `lib/` — content schema + loader (build-time only), quiz/deck logic, progress store (localStorage)
-- `public/images/learn/` — chapter illustrations; `public/downloads/agents/` — ready-to-copy reviewer agent templates (OpenCode V2 + Claude Code)
-- `tests/` — Vitest suites (`lib/`, `components/`, `content/`, smoke)
+- `content/` — chapters per the layout above, plus `exam.yaml`
+- `lib/` — content schema + loader (build-time only), exam pass-mark sourcing, quiz/deck logic, progress store (localStorage)
+- `public/images/learn/` — chapter illustrations; `public/downloads/` — the pre-generated Anki `.apkg` plus ready-to-copy reviewer agent templates (OpenCode V2 + Claude Code)
+- `tests/` — Vitest suites (`lib/`, `components/`, `content/`, `anki/`, smoke)
 - `docs/` — design spec and implementation plan
+- `scripts/` — `export-anki.py` (regenerates the `.apkg`; run via `pnpm export-anki`)
 
 ## Roadmap
 
-- Final exam page + `content/exam.yaml` (20 questions, pass at 80%)
-- Chapters 2–8: when-to-use, OpenCode subagents, Claude Code subagents, crafting dispatches, parallel dispatch, subagent-driven development, recipes
-- Downloads page + Anki `.apkg` export of all flashcards
+Everything planned for the course is built:
+
+- **All nine chapters** (00–08) — each with a lesson, a quiz, and a flashcard deck
+- **Final exam** — spans the whole course, pass mark 80% (from `exam.yaml`), free retakes
+- **Downloads page** — the full flashcard collection as an Anki `.apkg` deck, plus the two agent templates with install paths
+- **Progress tracking** — per-chapter quiz scores, done markers, flashcard marks, exam result, and an overall progress bar, all in localStorage
+
+Possible next steps:
+
+- Gitea mirror on `jpeezy-nas` (remote `gitea`, likely `http://jpeezy-nas:3000`) — not configured yet

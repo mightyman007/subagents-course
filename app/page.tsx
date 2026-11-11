@@ -1,11 +1,31 @@
+import fs from "node:fs";
+import path from "node:path";
 import Image from "next/image";
 import Link from "next/link";
+import { loadChapterSlugs, loadChapter, loadExam } from "@/lib/content/load";
 
 /**
- * Course landing. Lean hero: illustration, title, one-paragraph BLUF, CTA.
- * (Chapter grid + progress stats arrive with the Task 12 landing polish.)
+ * Course landing: hero illustration, title, one-paragraph BLUF, a stats row
+ * derived at build time from the content loaders (never hardcoded — adding a
+ * chapter, an exam question, or a template updates the numbers for free),
+ * then the CTAs.
  */
 export default function Home() {
+  const slugs = loadChapterSlugs();
+  const chapterCount = slugs.length;
+  const cardTotal = slugs.reduce((sum, slug) => sum + loadChapter(slug).flashcards.length, 0);
+  const examCount = loadExam().length;
+  const templateCount = fs
+    .readdirSync(path.join(process.cwd(), "public", "downloads", "agents"))
+    .filter((file) => file.endsWith(".md")).length;
+
+  const stats = [
+    { label: "chapters", value: chapterCount },
+    { label: "exam questions", value: examCount },
+    { label: "flashcards", value: cardTotal },
+    { label: "agent templates", value: templateCount },
+  ];
+
   return (
     <div className="flex flex-1 flex-col justify-center px-6 py-16">
       <main className="mx-auto w-full max-w-2xl">
@@ -31,6 +51,15 @@ export default function Home() {
           parallel dispatch, and copy-paste recipes — with quizzes, flashcards, a final exam, and
           ready-to-use agent templates.
         </p>
+
+        <dl className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {stats.map((stat) => (
+            <div key={stat.label} className="rounded-lg border border-line p-3">
+              <dt className="font-mono text-xs text-muted">{stat.label}</dt>
+              <dd className="mt-1 font-mono text-xl text-foreground">{stat.value}</dd>
+            </div>
+          ))}
+        </dl>
 
         <div className="mt-8 flex flex-wrap items-center gap-4">
           <Link

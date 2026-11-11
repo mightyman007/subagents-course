@@ -13,7 +13,7 @@
   tags: [course]
 - id: c0-f4
   front: "How does the final exam work?"
-  back: "20 questions spanning all chapters. No per-question feedback while answering — one submit at the end, one score, pass/fail against an 80% mark. Retake allowed."
+  back: "It covers the whole course. No per-question feedback while answering — one submit at the end, one score, pass/fail against an 80% mark. Retake allowed."
   tags: [course]
 - id: c0-f5
   front: "What comes with the course's agent template downloads?"

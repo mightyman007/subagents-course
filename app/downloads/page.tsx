@@ -20,8 +20,10 @@ interface AgentTemplate {
   tool: string;
   /** One-line description shown under the template name. */
   description: string;
-  /** Where the file goes after copy/download (directory + filename). */
+  /** Project-local install path (relative to a project root). */
   installPath: string;
+  /** Global install path (available in every project). */
+  globalInstallPath: string;
 }
 
 const AGENT_TEMPLATES: AgentTemplate[] = [
@@ -31,6 +33,7 @@ const AGENT_TEMPLATES: AgentTemplate[] = [
     description:
       "Code-reviewer subagent, read-only by design: edit and shell actions are denied, findings reported by severity.",
     installPath: ".opencode/agents/opencode-reviewer.md",
+    globalInstallPath: "~/.config/opencode/agents/opencode-reviewer.md",
   },
   {
     file: "claude-code-reviewer.md",
@@ -38,6 +41,7 @@ const AGENT_TEMPLATES: AgentTemplate[] = [
     description:
       "The same reviewer as a Claude Code subagent file: tools limited to Read, Glob, and Grep.",
     installPath: ".claude/agents/code-reviewer.md",
+    globalInstallPath: "~/.claude/agents/code-reviewer.md",
   },
 ];
 
@@ -107,7 +111,8 @@ export default function DownloadsPage() {
               </div>
               <p className="mt-2 text-sm leading-relaxed text-muted">{template.description}</p>
               <p className="mt-2 font-mono text-xs text-muted">
-                install at <span className="text-accent">{template.installPath}</span> ·{" "}
+                install at <span className="text-accent">{template.installPath}</span> (project)
+                or <span className="text-accent">{template.globalInstallPath}</span> (global) ·{" "}
                 <a
                   href={`/downloads/agents/${template.file}`}
                   download

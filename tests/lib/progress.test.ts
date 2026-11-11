@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_PROGRESS,
+  EXAM_READY_CHAPTERS,
   KEY,
+  courseDonePercent,
   loadProgress,
   saveProgress,
   markQuiz,
@@ -219,5 +221,39 @@ describe("resetProgress", () => {
   it("does not throw when window is undefined", () => {
     stubNoWindow();
     expect(() => resetProgress()).not.toThrow();
+  });
+});
+
+describe("courseDonePercent (overall progress bar math)", () => {
+  it("0% when nothing is done", () => {
+    expect(courseDonePercent(0, 9)).toBe(0);
+  });
+
+  it("partial progress floors to an integer (never overstates)", () => {
+    expect(courseDonePercent(3, 9)).toBe(33);
+    expect(courseDonePercent(6, 9)).toBe(66);
+    // 8/9 = 88.9% → 88: the bar only reads 100% when the course is complete.
+    expect(courseDonePercent(8, 9)).toBe(88);
+  });
+
+  it("100% only when every chapter is done", () => {
+    expect(courseDonePercent(9, 9)).toBe(100);
+    expect(courseDonePercent(1, 1)).toBe(100);
+  });
+
+  it("guards an empty course (total 0) to 0% instead of NaN", () => {
+    expect(courseDonePercent(0, 0)).toBe(0);
+    expect(courseDonePercent(5, 0)).toBe(0);
+  });
+
+  it("clamps out-of-range inputs into 0-100", () => {
+    expect(courseDonePercent(-1, 9)).toBe(0);
+    expect(courseDonePercent(12, 9)).toBe(100);
+  });
+});
+
+describe("EXAM_READY_CHAPTERS", () => {
+  it("is the exam-readiness threshold the course index hints at", () => {
+    expect(EXAM_READY_CHAPTERS).toBe(6);
   });
 });

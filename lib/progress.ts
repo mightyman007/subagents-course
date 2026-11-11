@@ -57,6 +57,23 @@ export type CardMark = "again" | "gotit";
 export const CHAPTER_DONE_PERCENT = 60;
 
 /**
+ * Course policy: once this many chapters are done, the course index shows the
+ * subtle "ready for the exam" hint linking to the final exam.
+ */
+export const EXAM_READY_CHAPTERS = 6;
+
+/**
+ * Overall course progress as an integer percent (0-100), FLOORED so the bar
+ * never overstates: 8/9 shows 88%, and only a complete course reads 100%.
+ * An empty course (total 0) guards to 0 instead of NaN.
+ */
+export function courseDonePercent(doneChapters: number, totalChapters: number): number {
+  if (totalChapters <= 0) return 0;
+  const percent = Math.floor((doneChapters / totalChapters) * 100);
+  return Math.max(0, Math.min(100, percent));
+}
+
+/**
  * Read persisted progress. SSR-safe by design: when there is no `window`
  * (server render / build / node), return DEFAULT_PROGRESS — never read
  * storage, never throw. Corrupted or wrong-shaped stored data is treated as

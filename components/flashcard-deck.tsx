@@ -17,6 +17,16 @@ interface FlashcardDeckProps {
   /** Deck the cards belong to (used by progress wiring in a later task). */
   deckId: string;
   /**
+   * Optional persisted marks (card id → mark) to merge into the deck's state
+   * on (re)hydration, so a returning reader's counts pick up where they left
+   * off. Merged exactly once per mount — the first non-empty value wins — and
+   * never again afterwards: the bridge hands the deck a fresh object on every
+   * persisted mark, and re-merging after a Restart would resurrect marks the
+   * reader just cleared (Restart is a local reset by design). Absent or empty
+   * means current behavior: the deck opens with zeroed counts.
+   */
+  initialMarks?: Record<string, "again" | "gotit">;
+  /**
    * Optional hook fired when a card is marked. Progress persistence wires
    * through this later — this component never touches storage itself.
    */
@@ -30,11 +40,29 @@ interface FlashcardDeckProps {
  * per-mark counts; finishing shows a summary with a restart control that
  * reshuffles under a new seed.
  */
-export function FlashcardDeck({ cards, deckId, onMark }: FlashcardDeckProps) {
+export function FlashcardDeck({ cards, deckId, initialMarks, onMark }: FlashcardDeckProps) {
   const [seed, setSeed] = useState(INITIAL_SEED);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [marks, setMarks] = useState<Record<string, Mark>>({});
+
+  // Rehydration (see initialMarks on the props): merge persisted marks into
+  // local state exactly once per mount — the first non-empty value wins. The
+  // bridge loads storage one microtask after mount, so this usually fires on
+  // the post-load render; a consumer that passes marks up front merges at
+  // mount. Local marks always win (`...prev` last), and ids outside the deck
+  // are harmlessly ignored by deckStats.
+  const marksHydrated = useRef(false);
+  useEffect(() => {
+    if (marksHydrated.current || !initialMarks) return;
+    if (Object.keys(initialMarks).length === 0) return;
+    marksHydrated.current = true;
+    // Merge outside the synchronous effect body (react-hooks/set-state-in-effect):
+    // one promise tick, same deferred-setState pattern as the progress bridges.
+    void Promise.resolve().then(() => {
+      setMarks((prev) => ({ ...initialMarks, ...prev }));
+    });
+  }, [initialMarks]);
 
   // Deterministic per seed, so recomputing on every render is safe and cheap
   // (and memoization could never change the outcome anyway).

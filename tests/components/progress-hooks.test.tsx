@@ -3,10 +3,12 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import {
   DeckProgressBridge,
   DoneMarker,
+  OverallProgress,
   QuizProgressBridge,
+  RecordedQuizScore,
 } from "@/components/progress-hooks";
 import type { Flashcard, Question } from "@/lib/content/schema";
-import { DEFAULT_PROGRESS, KEY } from "@/lib/progress";
+import { DEFAULT_PROGRESS, EXAM_READY_CHAPTERS, KEY } from "@/lib/progress";
 
 // vitest runs without `globals: true`, so RTL auto-cleanup must be wired here;
 // localStorage is cleared too — the progress store is global per test file.
@@ -121,6 +123,20 @@ describe("DeckProgressBridge", () => {
       expect(screen.getByText(/2\/2 cards marked in earlier runs/)).toBeInTheDocument(),
     );
   });
+
+  it("rehydrates persisted marks into the deck counts (position still starts at card 1)", async () => {
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({ ...DEFAULT_PROGRESS, cards: { k1: "gotit" } }),
+    );
+    render(<DeckProgressBridge deckId="ch-x" cards={cards} />);
+
+    await waitFor(() => expect(screen.getByText("1/2")).toBeInTheDocument());
+    expect(screen.getByText("1 got it")).toBeInTheDocument();
+    expect(screen.getByText("0 again")).toBeInTheDocument();
+    // No auto-jump: the deck opens on its first card even with marks on file.
+    expect(screen.getByRole("button", { name: "front one" })).toBeInTheDocument();
+  });
 });
 
 describe("DoneMarker", () => {
@@ -136,5 +152,70 @@ describe("DoneMarker", () => {
   it("resolves to 'pending' for an unfinished chapter", async () => {
     render(<DoneMarker chapterId="ch-x" />);
     await waitFor(() => expect(screen.getByText("pending")).toBeInTheDocument());
+  });
+});
+
+describe("OverallProgress", () => {
+  it("starts at the deterministic empty state, then shows the stored percent", async () => {
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        ...DEFAULT_PROGRESS,
+        chaptersDone: ["a", "b", "c"],
+      }),
+    );
+    render(<OverallProgress totalChapters={9} />);
+
+    // No flash of stored data: 0/9 · 0% until the mount effect resolves.
+    expect(screen.getByText("0/9 chapters done")).toBeInTheDocument();
+    expect(screen.getByText("0%")).toHaveAttribute("data-percent", "0");
+
+    await waitFor(() => expect(screen.getByText("3/9 chapters done")).toBeInTheDocument());
+    expect(screen.getByText("33%")).toHaveAttribute("data-percent", "33");
+  });
+
+  it("reads 100% only when every chapter is done", async () => {
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({ ...DEFAULT_PROGRESS, chaptersDone: ["a", "b", "c", "d", "e", "f", "g", "h"] }),
+    );
+    render(<OverallProgress totalChapters={9} />);
+    await waitFor(() => expect(screen.getByText("8/9 chapters done")).toBeInTheDocument());
+    expect(screen.getByText("88%")).toBeInTheDocument();
+  });
+
+  it("hints at the exam once EXAM_READY_CHAPTERS chapters are done, linking to /exam", async () => {
+    const done = Array.from({ length: EXAM_READY_CHAPTERS }, (_, i) => `ch-${i}`);
+    localStorage.setItem(KEY, JSON.stringify({ ...DEFAULT_PROGRESS, chaptersDone: done }));
+    render(<OverallProgress totalChapters={9} />);
+
+    const link = await screen.findByRole("link", { name: /ready for the exam/ });
+    expect(link).toHaveAttribute("href", "/exam");
+  });
+
+  it("stays quiet about the exam before the readiness threshold", async () => {
+    localStorage.setItem(KEY, JSON.stringify({ ...DEFAULT_PROGRESS, chaptersDone: ["a"] }));
+    render(<OverallProgress totalChapters={9} />);
+    await waitFor(() => expect(screen.getByText("1/9 chapters done")).toBeInTheDocument());
+    expect(screen.queryByText(/ready for the exam/)).toBeNull();
+  });
+});
+
+describe("RecordedQuizScore", () => {
+  it("renders nothing until the store resolves, then shows the recorded attempt", async () => {
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({ ...DEFAULT_PROGRESS, quizzes: { "ch-x": { score: 2, total: 3 } } }),
+    );
+    render(<RecordedQuizScore chapterId="ch-x" />);
+
+    expect(screen.queryByText(/last attempt/)).toBeNull(); // no flash of stored data
+    await waitFor(() => expect(screen.getByText(/last attempt: 2\/3/)).toBeInTheDocument());
+    expect(screen.getByText(/67%/)).toBeInTheDocument();
+  });
+
+  it("renders nothing when no attempt was recorded", async () => {
+    render(<RecordedQuizScore chapterId="ch-x" />);
+    await waitFor(() => expect(screen.queryByText(/last attempt/)).toBeNull());
   });
 });
