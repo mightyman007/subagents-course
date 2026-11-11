@@ -1,0 +1,45 @@
+# Chapter 7 flashcards — subagent-driven development.
+- id: c7-f1
+  front: "What is the SDD loop, per task?"
+  back: "Fresh implementer builds the task, a separate reviewer checks spec compliance + quality, findings drive a bounded fix loop, a breaker stops round 5, and every outcome lands in the ledger."
+  tags: [core]
+- id: c7-f2
+  front: "Why a fresh implementer per task — not one implementer for the branch?"
+  back: "Each task starts clean: no cross-task contamination, full attention for every task, and a brief that must actually specify the work instead of leaning on an implementer's stale memory."
+  tags: [core]
+- id: c7-f3
+  front: "What two things does the task reviewer check?"
+  back: "Spec compliance — did it build what the task said? — and quality — is the code good? Separate dispatch, never the implementer grading itself."
+  tags: [core]
+- id: c7-f4
+  front: "Fix rounds 1-3: who fixes, and why?"
+  back: "Resume the original implementer. It still holds full context on what it built; early findings are usually misunderstandings it can correct directly, and resuming is cheap."
+  tags: [core]
+- id: c7-f5
+  front: "Fix rounds 4-5: who fixes, and why?"
+  back: "A fresh implementer. Three failed rounds leave the original's context poisoned — failed attempts, rationalizations, sunk-cost defense. Fresh eyes read task + ledger + findings without the baggage."
+  tags: [core]
+- id: c7-f6
+  front: "What happens at the round-5 breaker?"
+  back: "Adjudication, not a sixth round: park the task with a ruling recorded in the ledger, or rule on whether the contested requirement is load-bearing — and change the requirement if it is not."
+  tags: [core]
+- id: c7-f7
+  front: "Why does the ledger have to be a file, not chat?"
+  back: "The ledger is what survives context compaction. Long SDD sessions outgrow the parent's window; the chat's memory is summarized away, but the file on disk stays the durable state."
+  tags: [core]
+- id: c7-f8
+  front: "What goes in the ledger?"
+  back: "Task list and states, decisions with reasons, breaker rulings, review findings pending resolution, and interface changes other tasks need to know. Apply the compaction test: would the next dispatch need it after compaction?"
+  tags: [core]
+- id: c7-f9
+  front: "Why a final whole-branch review after all tasks pass individually?"
+  back: "Per-task reviews are blind to cross-task interactions — task 7 can change an interface task 3 calls, and no per-task reviewer could see both halves. Only the whole-branch diff shows the seams."
+  tags: [core]
+- id: c7-f10
+  front: "When does inline execution beat SDD?"
+  back: "Small tasks, tight iteration, quick fixes — whenever the dispatch overhead exceeds the isolation benefit. SDD pays on many-task, context-heavy branches where review discipline matters more than speed."
+  tags: [core]
+- id: c7-f11
+  front: "Roughly what does SDD cost in dispatches?"
+  back: "Per task: implementer + reviewer minimum, plus one resume-or-fresh dispatch plus re-review per fix round. Five tasks with two fix rounds each is twenty-plus dispatches — versus one person working inline."
+  tags: [core]

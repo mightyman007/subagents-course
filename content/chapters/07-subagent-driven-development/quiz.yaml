@@ -1,0 +1,51 @@
+# Chapter 7 quiz — subagent-driven development.
+- id: c7-q1
+  type: single
+  prompt: "Why does SDD dispatch a FRESH implementer for every task instead of one implementer for the whole branch?"
+  options:
+    - "Fresh implementers are cheaper per task"
+    - "Each task starts clean — no cross-task contamination, full attention, and a brief that must actually hold up"
+    - "Fresh implementers cannot make mistakes"
+    - "It avoids having to write a ledger"
+  correct: [1]
+  explanation: "A fresh child per task extends Chapter 1's isolation to the sequence of work: no accumulated assumptions, the same clean budget for every task, and a brief that either specifies the task or visibly fails to — instead of an implementer improvising from stale memory."
+- id: c7-q2
+  type: single
+  prompt: "In the fix loop, rounds 1-3 resume the original implementer but rounds 4-5 dispatch a fresh one. What changes at round 4?"
+  options:
+    - "Nothing — it is just a numbering convention"
+    - "The fresh implementer is cheaper than resuming"
+    - "The implementer's accumulated context becomes a liability: failed attempts, rationalizations, sunk-cost defense of its own design"
+    - "The reviewer takes over implementation duties"
+  correct: [2]
+  explanation: "Context is an asset early and a liability late. Three failed rounds leave the resumed implementer poisoned — defending the design it chose — so round 4 goes to fresh eyes that read the task, ledger, and findings with none of the sunk cost."
+- id: c7-q3
+  type: boolean
+  prompt: "The task reviewer checks two different things: spec compliance (did it build what the task said?) and quality (is the code good?)."
+  correct: true
+  explanation: "Two lenses, one verdict. Spec compliance catches the most expensive delegated-work failure — a beautifully built wrong thing. Quality catches bugs, edge cases, and missing tests. The implementer never grades its own work; the reviewer is a separate dispatch."
+- id: c7-q4
+  type: single
+  prompt: "Five fix rounds have failed on a task. What does the round-5 breaker do?"
+  options:
+    - "Runs a sixth round with a stronger model"
+    - "Deletes the failing tests so the task can pass"
+    - "Stops and adjudicates: park the task with a ruling, or rule on whether the contested requirement is load-bearing"
+    - "Restarts the whole branch from the first task"
+  correct: [2]
+  explanation: "Five failed rounds is evidence that more rounds will not help. The breaker has exactly two outcomes: park with a ruling recorded in the ledger, or put the requirement itself on trial — if it is not load-bearing, change the requirement instead of burning round 6."
+- id: c7-q5
+  type: multi
+  prompt: "Which belong in the ledger?"
+  options:
+    - "Task list and each task's state"
+    - "Decisions and rulings, with their reasons"
+    - "Review findings pending resolution"
+    - "Raw tool output from every subagent run"
+  correct: [0, 1, 2]
+  explanation: "The ledger holds state and decisions — tasks, decisions, rulings, findings, interface notes. Raw tool output is exactly what stays inside each child (Chapter 1's isolation); pasting it into the ledger would rebuild the noise the pattern exists to avoid."
+- id: c7-q6
+  type: boolean
+  prompt: "SDD is the right default for every change, because the reviews it adds can only improve the outcome."
+  correct: false
+  explanation: "Honest framing: SDD is an advanced pattern with real token costs — a five-task branch with two fix rounds each is twenty-plus dispatches. Inline execution is the cheaper alternative for small tasks and tight iteration; SDD earns its cost on many-task branches where review discipline and context hygiene pay rent."

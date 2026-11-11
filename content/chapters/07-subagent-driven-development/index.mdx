@@ -1,0 +1,103 @@
+---
+title: "Subagent-driven development"
+order: 7
+objectives:
+  - "Run the full loop: fresh implementer per task, task review, bounded fix loop, ledger, whole-branch review"
+  - "Choose the right fix-round operator: resume the implementer on rounds 1-3, go fresh on rounds 4-5"
+  - "Apply the round-5 breaker: park with a ruling, or rule on whether the requirement is load-bearing"
+  - "Decide honestly when the pattern is worth its token cost — inline execution is the cheaper alternative"
+---
+
+Honesty first, because this chapter teaches the most expensive pattern in the course: **subagent-driven development (SDD) is an advanced discipline with real token costs, and inline execution — doing the work yourself in the main conversation — is the cheaper alternative.** SDD does not exist because it is clever. It exists for the projects where *you* are the bottleneck: a branch of many tasks, hours of context-heavy work, and a main conversation that would otherwise drown in implementation detail. The pattern trades tokens for two things inline work cannot buy at scale — every task built against a fresh context, and every task reviewed by an agent that did not build it.
+
+## The loop
+
+Per task, the loop has this shape:
+
+1. **Fresh implementer.** Dispatch a new subagent whose brief is the task spec plus the ledger context it needs. It writes the code and returns a summary.
+2. **Task review.** Dispatch a reviewer that checks the work on two axes: **spec compliance** (did it build what the task actually said?) and **quality** (is the code good?).
+3. **Fix loop.** Findings go back to an implementer for a fix round — with a strict operator policy, below.
+4. **Breaker.** If five fix rounds pass without a pass, stop fixing and adjudicate.
+5. **Ledger.** Every outcome — pass, ruling, finding — is recorded.
+6. When all tasks are done, one final **whole-branch review**.
+
+<Mermaid
+  chart={`
+graph TD
+  L["Ledger: pick the next task"] --> I["Fresh implementer subagent builds the task"]
+  I --> R["Reviewer subagent: spec compliance and quality"]
+  R -->|"pass"| LED["Ledger: task done"]
+  R -->|"issues, rounds 1-3"| RS["Resume the implementer with the findings"]
+  R -->|"issues, rounds 4-5"| FR["Fresh implementer with the findings"]
+  RS --> R
+  FR --> R
+  R -->|"round 5: breaker"| AD["Adjudicate: park with a ruling, or rule on load-bearing"]
+  AD --> LED2["Ledger: ruling recorded"]
+  LED --> NXT["Next task"]
+  LED2 --> NXT
+  NXT -->|"tasks remain"| L
+  NXT -->|"all tasks done"| WB["Whole-branch review"]
+`}
+/>
+
+## Why every implementer is fresh
+
+One implementer per **task** — not one implementer for the branch. Each task's implementer is a new subagent that starts with the task brief and the ledger, and nothing else. The reasons compound:
+
+- **No cross-task contamination.** Yesterday's task's assumptions should not silently shape today's. A fresh child brings Chapter 1's isolation to the *sequence* of work, not just to exploration.
+- **Every task gets full attention.** A worker that has already built three features today gives the fourth a tired, cluttered context. Fresh children give every task the same clean budget.
+- **The brief is the spec.** If a fresh implementer with the ledger cannot build the task, the problem is the brief or the ledger — and that failure is *visible*, instead of being papered over by an implementer improvising from stale memory.
+
+## The review: two lenses, one verdict
+
+The reviewer is a separate dispatch — never the implementer grading its own work. Its two lenses are deliberately different:
+
+- **Spec compliance** — did the work do what the task said? Not "is it impressive"; "is it the thing?" This catches the most expensive failure in delegated work: a beautifully built wrong thing.
+- **Quality** — is the code good? Bugs, edge cases, error paths, test coverage. The reviewer patterns from Chapters 3-4 fit this role directly: read-only by permission or tool allowlist, findings in severity order with file and line.
+
+The reviewer returns a verdict — pass, or findings. Findings are not opinions to argue; they are the input to the fix loop, and they go into the ledger whatever happens next.
+
+## The fix loop: resume, then go fresh
+
+When the reviewer returns findings, the fixes happen in **rounds**, and who carries them out changes with the round count:
+
+- **Rounds 1-3 — resume the implementer.** The original implementer still holds the full context of what it built; resuming it with the findings is cheap and fast, and early findings are usually misunderstandings it can correct directly.
+- **Rounds 4-5 — fresh implementer.** An implementer that has failed three consecutive reviews is carrying poisoned context: its own failed attempts, its rationalizations for each, and a growing tendency to defend the design it already chose. Round 4 goes to a fresh implementer that reads the task, the ledger, and the accumulated findings — with none of the sunk cost.
+
+This is the pattern's quiet insight: **context is an asset early and a liability late.** The resume-then-fresh policy is how the loop spends that asset while it is still an asset.
+
+## The breaker at round 5
+
+Round 5 ends the loop — not with a sixth fix round, but with **adjudication**. Five failed rounds is strong evidence that more rounds will not help; something above the code is wrong. The breaker has exactly two outcomes:
+
+1. **Park with a ruling.** The task is parked and the ledger records the ruling: what was attempted, what blocked it, what was decided, and what would have to change for the task to resume. The branch moves on — with the decision written down, not drifting in someone's memory.
+2. **Rule on load-bearing.** If the fix loop keeps missing the same requirement, the requirement itself goes on trial: is it actually load-bearing? A requirement that five rounds of competent effort cannot satisfy may be ambiguous, contradictory, or simply unnecessary. If it is not load-bearing, change the requirement — in the ledger, explicitly. If it is, the parked-task ruling above applies, and the blocker is now a named problem instead of a silent time sink.
+
+The breaker is what makes the loop safe to run unattended-ish: it converts "the agent kept churning" into "the agent stopped and wrote down why."
+
+## The ledger: what survives compaction
+
+Every state change goes into the **ledger** — a file (or files) in the repository, not chat messages: the task list and each task's state, decisions with their reasons, rulings from breakers, review findings pending resolution, interface changes worth knowing across tasks.
+
+Why it must be a file, and why it must be everything: **the ledger is what survives context compaction.** A long SDD session will outgrow the parent's context window, and compaction summarizes the conversation away — the chat's memory of round 2's findings is gone after compaction. The ledger on disk is the durable state. When in doubt about what to write down, apply the compaction test: *if the parent's context were compacted right now, what would the next dispatch need that it could not reconstruct from the repo?* That is ledger content.
+
+## The final review: whole branch
+
+When the ledger says every task is done, the loop runs one last dispatch — a review of the **entire branch diff**, not the per-task slices. Per-task reviews were correct for their purpose, but they are structurally blind to cross-task interactions: task 7 changed an interface task 3's code calls; no per-task reviewer could see that, because at review time the other half did not exist yet. The whole-branch review is where those seams get inspected, and it closes the loop before a human ever looks at the branch.
+
+## What it costs, honestly
+
+Do the arithmetic before adopting the pattern. One task costs an implementer dispatch plus a reviewer dispatch at minimum; every fix round adds a resume or a fresh dispatch plus a re-review; the whole branch adds a final review on top. A five-task branch with two fix rounds per task is roughly **twenty-plus dispatches** — versus one person working inline through the same list.
+
+| Choose | When |
+| --- | --- |
+| Inline execution | Small tasks, tight iteration, quick fixes — work where the dispatch overhead exceeds the isolation benefit |
+| Subagent-driven development | Many-task branches, hours of context-heavy work, parallelizable tasks (Chapter 6), and work where review discipline matters more than speed |
+
+The honest test: if you cannot articulate what the reviews and fresh contexts will catch *in your specific project*, run it inline. The pattern earns its cost where review pressure and context hygiene pay rent — and it burns tokens quietly everywhere else.
+
+<VideoPlaceholder topic="Full SDD walkthrough — owner screencast" />
+
+## What you should now be able to say
+
+If a colleague asks "what is subagent-driven development?", your answer is the loop: **a fresh implementer per task, a reviewer checking spec compliance and quality, a fix loop that resumes the implementer on rounds 1-3 and goes fresh on 4-5, a breaker at round 5 that parks with a ruling or rules on load-bearing, a ledger that survives context compaction, and a whole-branch review at the end** — adopted with open eyes about the token cost, because inline execution is the cheaper alternative whenever the isolation and review discipline are not actually buying you anything. Final chapter: the copy-paste recipes that turn everything since Chapter 5 into dispatches you can paste today.

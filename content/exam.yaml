@@ -6,8 +6,9 @@
 # exam-30..33 cover Chapter 3 (OpenCode agents), and exam-34..37 cover
 # Chapter 4 (Claude Code agents) — 37 questions total. Task 10 continued the
 # pattern for the craft chapters as they landed: exam-38..40 cover Chapter 5
-# (crafting dispatches) and exam-41..43 cover Chapter 6 (parallel dispatch) —
-# 44 questions total. Task 14 verifies the
+# (crafting dispatches) and exam-41..43 cover Chapter 6 (parallel dispatch),
+# exam-44..46 cover Chapter 7 (subagent-driven development) — 47 questions
+# total. Task 14 verifies the
 # exam spans the whole course — so the exam page is fully data-driven: never
 # assume a fixed question count beyond the validator minimum (>=20, enforced
 # by loadExam). Every question must carry a non-empty explanation.
@@ -388,3 +389,28 @@ questions:
     prompt: "Two fan-out workers may safely edit the same file if both dispatches tell the worker to be careful with it."
     correct: false
     explanation: "'Be careful' is not a partition — concurrent edits to one file are a last-writer-wins race, and the loser's fix silently vanishes. The parent prevents it structurally: disjoint files per brief, serialization for overlapping domains, or main-conversation edits for shared surfaces."
+  - id: exam-44
+    type: single
+    prompt: "In the SDD fix loop, which operator policy is correct?"
+    options:
+      - "Resume the implementer for every round — its context is always an asset"
+      - "A fresh implementer for every round — context is always a liability"
+      - "Resume the implementer on rounds 1-3; go fresh on rounds 4-5"
+      - "The reviewer applies the fixes itself between rounds"
+    correct: [2]
+    explanation: "Context is an asset early and a liability late: rounds 1-3 resume the implementer that still holds the full picture, while rounds 4-5 go to a fresh implementer because the resumed one now carries failed attempts and sunk-cost defense of its own design."
+  - id: exam-45
+    type: single
+    prompt: "A task has failed five fix rounds. What does the breaker do?"
+    options:
+      - "Adjudicates: park the task with a ledger ruling, or rule on whether the requirement is load-bearing"
+      - "Runs round 6 with a higher effort setting"
+      - "Marks the task done with whatever state it reached"
+      - "Rolls back the entire branch"
+    correct: [0]
+    explanation: "Five failed rounds is evidence that more rounds will not help — something above the code is wrong. The two outcomes: park with a recorded ruling, or put the requirement itself on trial and change it if it is not load-bearing."
+  - id: exam-46
+    type: boolean
+    prompt: "The SDD ledger matters because it survives context compaction — the conversation's memory of decisions does not."
+    correct: true
+    explanation: "A long SDD session outgrows the parent's context window, and compaction summarizes the conversation away. The ledger on disk — task states, decisions, rulings, findings, interface notes — is the durable state the next dispatch reads."
