@@ -5,6 +5,7 @@ objectives:
   - "Run the full loop: fresh implementer per task, task review, bounded fix loop, ledger, whole-branch review"
   - "Choose the right fix-round operator: resume the implementer on rounds 1-3, go fresh on rounds 4-5"
   - "Apply the round-5 breaker: park with a ruling, or rule on whether the requirement is load-bearing"
+  - "Match each dispatch role to a model tier: cheapest for mechanical transcription, mid for implementation and reviews, most capable for architecture and the whole-branch review"
   - "Decide honestly when the pattern is worth its token cost — inline execution is the cheaper alternative"
 ---
 
@@ -85,9 +86,22 @@ Why it must be a file, and why it must be everything: **the ledger is what survi
 
 When the ledger says every task is done, the loop runs one last dispatch — a review of the **entire branch diff**, not the per-task slices. Per-task reviews were correct for their purpose, but they are structurally blind to cross-task interactions: task 7 changed an interface task 3's code calls; no per-task reviewer could see that, because at review time the other half did not exist yet. The whole-branch review is where those seams get inspected, and it closes the loop before a human ever looks at the branch.
 
+## Picking the model per role
+
+Every dispatch in the loop runs on a model, and Chapters 3 and 4 showed where that choice lives: OpenCode's `model` frontmatter field (a subagent inherits the parent's model when none is configured) and Claude Code's four-step resolution. In SDD, matching the tier to the role is one of the biggest cost levers you have:
+
+| Role | Tier | Why |
+| --- | --- | --- |
+| Mechanical transcription — the complete code is already in the brief | Cheapest available | There is nothing to figure out; the model transcribes. Spend nothing here |
+| Prose-driven implementation and reviews | Mid tier | Turn count beats token price: cheap models often take 2-3x more turns to reach the same result, so the "cheap" choice can cost more per task |
+| Architecture decisions and the final whole-branch review | The most capable available | Judgment-heavy work where a missed cross-task interaction is the costliest possible miss |
+| Fix rounds 4-5 | One tier above the stuck implementer | The task has resisted that tier for three rounds — escalate before the breaker, not after it |
+
+Two rows deserve a second look. The mid-tier row reverses most people's instinct: per-token price is the visible number, but a model that needs two or three times as many turns to converge burns more total tokens, more wall-clock, and more review cycles — the expensive-looking mid tier is often the economical one. And the last row is the loop's pressure valve: escalating the model tier on rounds 4-5 is one more thing to try before the breaker fires, and a fresh implementer sometimes succeeds for a dull reason — it was simply running on a tier that could reason about the problem.
+
 ## What it costs, honestly
 
-Do the arithmetic before adopting the pattern. One task costs an implementer dispatch plus a reviewer dispatch at minimum; every fix round adds a resume or a fresh dispatch plus a re-review; the whole branch adds a final review on top. A five-task branch with two fix rounds per task is roughly **twenty-plus dispatches** — versus one person working inline through the same list.
+Do the arithmetic before adopting the pattern. One task costs an implementer dispatch plus a reviewer dispatch at minimum; every fix round adds a resume or a fresh dispatch plus a re-review; the whole branch adds a final review on top. That is **roughly thirty dispatches for a five-task plan with two fix rounds each** — versus one person working inline through the same list.
 
 | Choose | When |
 | --- | --- |

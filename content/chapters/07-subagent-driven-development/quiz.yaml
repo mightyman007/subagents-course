@@ -48,4 +48,14 @@
   type: boolean
   prompt: "SDD is the right default for every change, because the reviews it adds can only improve the outcome."
   correct: false
-  explanation: "Honest framing: SDD is an advanced pattern with real token costs — a five-task branch with two fix rounds each is twenty-plus dispatches. Inline execution is the cheaper alternative for small tasks and tight iteration; SDD earns its cost on many-task branches where review discipline and context hygiene pay rent."
+  explanation: "Honest framing: SDD is an advanced pattern with real token costs — a five-task plan with two fix rounds each is roughly thirty dispatches. Inline execution is the cheaper alternative for small tasks and tight iteration; SDD earns its cost on many-task branches where review discipline and context hygiene pay rent."
+- id: c7-q7
+  type: single
+  prompt: "Why does the model-tier guidance put prose-driven implementation and reviews on a mid tier instead of the cheapest?"
+  options:
+    - "Because expensive models are always more accurate"
+    - "Because cheap models cannot use tools"
+    - "Turn count beats token price — cheap models often take 2-3x more turns to reach the same result, so the per-task cost can end up higher"
+    - "Because only mid-tier models can read the ledger"
+  correct: [2]
+  explanation: "Per-token price is the visible number, but turns are the real unit of cost: a cheap model that needs two or three times as many turns burns more total tokens and wall-clock than a mid-tier model converging in fewer turns. Mechanical transcription is the exception — there the brief already contains the code, so the cheapest tier is right."

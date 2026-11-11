@@ -41,5 +41,13 @@
   tags: [core]
 - id: c7-f11
   front: "Roughly what does SDD cost in dispatches?"
-  back: "Per task: implementer + reviewer minimum, plus one resume-or-fresh dispatch plus re-review per fix round. Five tasks with two fix rounds each is twenty-plus dispatches — versus one person working inline."
+  back: "Per task: implementer + reviewer minimum, plus one resume-or-fresh dispatch plus re-review per fix round. Five tasks with two fix rounds each is roughly thirty dispatches — versus one person working inline."
+  tags: [core]
+- id: c7-f12
+  front: "Which model tier does each SDD role get?"
+  back: "Mechanical transcription (complete code in the brief) — cheapest. Prose-driven implementation and reviews — mid tier. Architecture and the final whole-branch review — most capable available. Fix rounds 4-5 — one tier above the stuck implementer."
+  tags: [core]
+- id: c7-f13
+  front: "Why can a 'cheap' model cost more per task than a mid-tier one?"
+  back: "Turn count beats token price: cheap models often take 2-3x more turns to reach the same result, spending more total tokens and wall-clock. The exception is mechanical transcription, where the code is already in the brief."
   tags: [core]

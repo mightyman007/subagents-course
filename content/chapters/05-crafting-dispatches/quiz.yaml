@@ -22,7 +22,7 @@
     - "The file paths where the relevant code lives"
     - "The subagent's memory of your earlier conversation"
     - "What the final report must contain"
-  correct: [0, 1, 2]
+  correct: [0, 1, 3]
   explanation: "Trick option: the subagent has NO memory of your earlier conversation — a fresh child inherits nothing, so context must be pasted and the output contract must be stated. Errors, paths, and the contract are all dispatch cargo; the conversation is not."
 - id: c5-q4
   type: single

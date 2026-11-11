@@ -20,6 +20,15 @@ The four recipes share one skeleton. Every dispatch below is the Chapter 5 anato
 
 Adapt the specifics — paths, test names, file counts — to your repository. Keep the shape.
 
+<Mermaid
+  chart={`
+graph TD
+  P["Match the task to a recipe"] --> D["Paste the dispatch, adapted to your paths"]
+  D --> V["Verify the return-side checks"]
+  V --> I["Integrate the verified result"]
+`}
+/>
+
 ## Recipe 1: Fix failing tests
 
 **When to use:** a bounded, independent failure cluster — the kind Chapter 2's flowchart green-lights. The dispatch below assumes three failures in one payment-retry domain; swap in your own numbered failures, paths, and recent commits.
@@ -53,14 +62,15 @@ Constraints:
 Return contract:
 - One paragraph: the root cause, and why all three tests failed
 - Every file changed, with a one-line reason
-- The exact test command you ran and its output tail, all three green
+- The exact test command you ran and its output tail — the full
+  payments suite, not just the three named tests, all green
 ```
 
 **What to check when it returns.** First, does the root cause actually explain *all three* failures? A cause that explains two of three is a suspicion, not a root cause — send it back rather than merging half a diagnosis. Second, diff against the constraints: only files under the allowed paths, timeouts untouched, no assertion loosened. Third, check the proof is real — the command should be the *full* payments suite, not the three named tests, because a fix that makes three tests pass while breaking a fourth is a net loss. Run the suite yourself if the output tail looks curated.
 
 ## Recipe 2: Code review
 
-**When to use:** any diff that matters — your own work before merging, or a teammate's branch. This recipe pairs with the ready-made reviewer agents from Chapters 3-4 ([OpenCode](/downloads/agents/opencode-reviewer.md), [Claude Code](/downloads/agents/claude-code-reviewer.md)); the dispatch text below does the same job when you are dispatching the built-in `explore` / `Explore` agents or a general worker.
+**When to use:** any diff that matters — your own work before merging, or a teammate's branch. This recipe pairs with the ready-made reviewer agents from Chapters 3-4 ([OpenCode](/downloads/agents/opencode-reviewer.md), [Claude Code](/downloads/agents/claude-code-reviewer.md)); the dispatch text below does the same job when you are dispatching the built-in `explore` / `Explore` agents or a general worker — or paste the diff into the dispatch itself, since a read-only search agent may not be able to run `git diff` on its own.
 
 ```text
 Review the changes on branch feature/retry-refactor. You are read-only:
