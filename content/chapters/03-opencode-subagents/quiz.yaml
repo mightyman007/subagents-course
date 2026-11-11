@@ -1,0 +1,56 @@
+# Chapter 3 quiz — OpenCode built-ins and custom agents.
+- id: c3-q1
+  type: single
+  prompt: "You need 'where does the retry logic live?' answered without touching any files. Which built-in do you ask the parent to dispatch?"
+  options:
+    - "build"
+    - "plan"
+    - "general"
+    - "explore"
+  correct: [3]
+  explanation: "explore is the read-only researcher: it searches and reads code or web sources without editing files. general is the multi-step worker with broad tool access, and build/plan are primary agents, not dispatch targets for a pure search."
+- id: c3-q2
+  type: boolean
+  prompt: "OpenCode's general subagent may spawn further subagents of its own when a task balloons in scope."
+  correct: false
+  explanation: "general handles research and multi-step work with broad tool access, but it CANNOT launch more subagents. The bound is deliberate: the orchestrator decides the topology, so a dispatched worker can't grow an unbounded tree beneath it."
+- id: c3-q3
+  type: single
+  prompt: "A custom agent lives at .opencode/agents/team/reviewer.md. What is its agent ID?"
+  options:
+    - "reviewer"
+    - "team/reviewer"
+    - "team.reviewer"
+    - "reviewer-team"
+  correct: [1]
+  explanation: "A nested path becomes part of the agent ID: team/reviewer. The directory structure is an organizing tool, and the path is load-bearing — it's how you address the agent in dispatches and permission rules."
+- id: c3-q4
+  type: single
+  prompt: "You write .opencode/agents/notes.md with only a description in the frontmatter — no mode field. What did you create?"
+  options:
+    - "A subagent, because files in agents/ are subagents by default"
+    - "A primary agent — mode defaults to primary for new custom agents"
+    - "Nothing; the file is rejected without a mode"
+    - "A disabled agent that must be enabled before use"
+  correct: [1]
+  explanation: "The classic gotcha: a new custom agent without mode defaults to PRIMARY — it appears in your agent switcher instead of the dispatchable catalog. Workers need mode: subagent (or all) explicitly."
+- id: c3-q5
+  type: multi
+  prompt: "Which statements about OpenCode's permission system are true?"
+  options:
+    - "Rules are an ordered list, and the LAST matching rule decides the effect"
+    - "The parent's subagent permissions control which agents it may launch"
+    - "A child session runs with the parent's permissions, not its own"
+    - "effect accepts allow, ask, or deny"
+  correct: [0, 1, 3]
+  explanation: "Rules are ordered with last-match-wins (broad rules first, exceptions after), effects are allow/ask/deny, and the parent's subagent rules gate launching. But the child always runs with its OWN configured permissions — the parent doesn't lend its rights."
+- id: c3-q6
+  type: single
+  prompt: "In an OpenCode agent file, what does the Markdown BODY become?"
+  options:
+    - "A tooltip shown in the UI when the agent is selected"
+    - "The agent's system prompt — its standing instructions"
+    - "A README entry for the agents directory"
+    - "Extra description text sent to the parent"
+  correct: [1]
+  explanation: "Frontmatter configures the agent; the body becomes its system prompt. That's why the shipped reviewer file reads as instructions ('You are a senior code reviewer...') rather than metadata."

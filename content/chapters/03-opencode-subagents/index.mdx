@@ -1,0 +1,229 @@
+---
+title: "OpenCode: built-ins and custom agents"
+order: 3
+objectives:
+  - "Name OpenCode V2's four visible built-ins and what each mode is for"
+  - "Dispatch a subagent from chat with the phrasing the parent understands"
+  - "Create custom agents as Markdown files in global and project locations, including nested agent IDs"
+  - "Write permission rules with action, resource, and effect — and predict which rule wins"
+  - "Explain how a parent's subagent permissions gate which agents it may launch"
+---
+
+Chapter 2 taught you to sort work into dispatchable and non-dispatchable. This chapter is the first of the two tool chapters: how OpenCode V2 actually implements the idea. OpenCode makes agents a first-class, file-based concept — you can dispatch useful work with zero configuration, and every agent you'll ever want beyond the built-ins is one Markdown file away.
+
+## The built-ins
+
+OpenCode ships four visible agents. Two are **primary** agents — the ones that *run* your session — and two are **subagents** — the ones a primary dispatches:
+
+| Agent | Mode | What it's for |
+| --- | --- | --- |
+| `build` | primary | The default coding agent. Tools and access outside the workspace are allowed by default; reads of sensitive environment files ask for approval |
+| `plan` | primary | Explores and plans without editing normal project files. It may write OpenCode plan files when asked, and shell commands remain permission-controlled |
+| `general` | subagent | Research and multi-step work with broad tool access — but it cannot launch more subagents |
+| `explore` | subagent | Searches and reads code or web sources without editing files |
+
+Three details worth pinning down:
+
+- **`explore` is the read-only researcher.** When you need "where does the retry logic live?" or "what does this module depend on?", dispatch `explore`: it can search and read — code and web sources — and cannot edit files.
+- **`general` is the multi-step worker.** It gets broad tool access for research and multi-step jobs, but it **cannot launch subagents of its own**. That's deliberate: it bounds the fan-out. Your orchestrator decides the topology; a dispatched worker doesn't get to spawn an unbounded tree beneath it.
+- **Hidden maintenance agents** (`compaction`, `title`, `summary`) exist but can't be selected directly — they do housekeeping. V2 has **no built-in `scout` agent**; if you've seen that name, it's from an older layout.
+
+## Dispatching in chat
+
+You rarely talk to a subagent directly — the parent composes the dispatch (Chapter 1). Your job is to *ask for it in terms the parent understands*. The canonical phrasing names the agent:
+
+```text
+Use the explore subagent to find every place we validate JWTs.
+Use the general subagent to upgrade the three failing packages and report what changed.
+```
+
+Name the agent, state the task, and — as Chapter 5 will drill — state what a good result looks like. The parent turns that into the child's brief: context, constraints, output expectations. Notice both examples name a built-in; the same sentence works for any agent you define below.
+
+## Custom agents are Markdown files
+
+An agent in OpenCode is **a system prompt, a model preference, permissions, and display details, packed into a named profile**. The file form is a Markdown document with YAML frontmatter, and there are two standard locations:
+
+- `~/.config/opencode/agents/<name>.md` — **global**, available in all your projects
+- `.opencode/agents/<name>.md` — **project**, checked into the repo for your team
+
+OpenCode discovers project `.opencode` directories from the current directory up to the project root, and **a nested path becomes part of the agent's ID**: a file at `.opencode/agents/team/reviewer.md` registers as the agent `team/reviewer`. Nesting is an organizing tool, and the path is load-bearing.
+
+(You can also define agents in JSONC under an `agents` key in any OpenCode config file — same fields, different container. This chapter sticks to the file form.)
+
+The frontmatter configures the agent; **the Markdown body becomes the agent's system prompt** — the standing instructions it runs with. The one field that surprises everyone:
+
+> **A new custom agent with no `mode` field defaults to `primary`** — it becomes a main agent you can switch to, not a subagent. If you write a worker and it shows up in your agent switcher instead of being dispatchable, this is why. Workers want `mode: subagent`.
+
+## Frontmatter reference
+
+| Field | What it does |
+| --- | --- |
+| `description` | The agent's purpose. OpenCode shows it to the model choosing which agent to launch — add it to subagents so the parent can route to them |
+| `mode` | `primary` (default for new custom agents), `subagent` (child sessions only), or `all` (either) |
+| `model` | `provider/model` with an optional `#variant`, e.g. an Anthropic Sonnet with a reasoning variant. A subagent uses its configured model, or **inherits the parent session's model** when none is configured |
+| `permissions` | Ordered rules — see the next section |
+| `steps` | A positive cap on model steps. On the final step OpenCode removes the tools and asks the model to summarize; new user input resets the allowance |
+| `hidden` | Removes the agent from normal listings, interactive discovery, and the subagent catalog. This controls **visibility, not security** — restrict behavior with permissions |
+| `color` | UI color for the agent, as a six-digit hex value |
+| `disabled` | Set `true` to remove a built-in or custom agent at that point in configuration loading |
+
+Two more things the docs make explicit. First, you can **override a built-in** by defining an agent with the same ID — for example, redefine `build` with a permission rule that makes `git push` ask first. Second, older V1 frontmatter fields are deprecated; if you're migrating files from a previous setup, check the migration guide rather than trusting old field names.
+
+## Permissions: ordered rules, last match wins
+
+Permissions are an **ordered list of rules**, each with three fields:
+
+| Field | Meaning |
+| --- | --- |
+| `action` | The tool or permission action; wildcards supported |
+| `resource` | What the action applies to — a path, a command, an agent ID; wildcards supported |
+| `effect` | `allow`, `ask`, or `deny` |
+
+**The last matching rule wins** — so write broad rules first and exceptions after them. The common actions:
+
+| Action | Covers |
+| --- | --- |
+| `shell` | Shell commands |
+| `edit` | Edit, write, and patch tools |
+| `subagent` | Child agents |
+| `read`, `glob`, `grep` | Local discovery tools |
+| `webfetch`, `websearch` | Web tools |
+| `skill` | Skill loading |
+
+A read-only reviewer, then, is two rules away from safe:
+
+```yaml
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: deny
+```
+
+And the gate works in the other direction too: **a parent's own `subagent` permissions control which agents it may launch**. An orchestrator restricted to one worker looks like this — deny everything, then allow the one ID, and because the last match wins, `reviewer` is allowed while every other agent ID is denied:
+
+```yaml
+permissions:
+  - action: subagent
+    resource: "*"
+    effect: deny
+  - action: subagent
+    resource: reviewer
+    effect: allow
+```
+
+One more division of labor to internalize: the parent's rules gate *launching*; **the child runs with its own configured permissions**. A parent that may launch `reviewer` doesn't lend the child its own edit rights — the reviewer's deny rules above apply inside the child regardless of who launched it.
+
+<Mermaid
+  chart={`
+graph TD
+  A["agent file: reviewer.md"] --> B["frontmatter: YAML between the dashes"]
+  B --> C["description: shown to the parent choosing an agent"]
+  B --> D["mode: primary, subagent, or all"]
+  B --> E["model: provider and model, optional variant"]
+  B --> F["permissions: ordered rules, last match wins"]
+  B --> G["steps, hidden, color, disabled"]
+  A --> H["body: Markdown"]
+  H --> I["becomes the agent's system prompt"]
+`}
+/>
+
+## A complete example: the reviewer agent
+
+The course ships a ready-to-use OpenCode reviewer agent at [`/downloads/agents/opencode-reviewer.md`](/downloads/agents/opencode-reviewer.md). Drop it into `.opencode/agents/` and it's dispatchable. Here is the file in full — frontmatter on top, system prompt as the body:
+
+````markdown
+---
+description: Reviews code changes for bugs, security issues, and readability. Use proactively after writing or changing code, and when asked to review.
+mode: subagent
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: deny
+---
+
+You are a senior code reviewer. Your job is to find real problems in the
+changes under review and report them clearly. You are read-only by design:
+this agent denies `edit` and `shell` actions, so you cannot modify files or
+run commands. Never attempt workarounds; if you need information you cannot
+get by reading, say so in the report.
+
+## Scope
+
+Review the current changes (the diff in progress, or the files named in the
+dispatch). Read enough surrounding code to judge each change in context — a
+line can be correct in isolation and wrong where it sits.
+
+## Method
+
+1. Understand the intent of the change before judging its details.
+2. Trace data flow through the change: what enters, what leaves, what can be
+   null, empty, negative, or hostile.
+3. Check the change's blast radius: every caller and every state affected.
+4. Verify error paths, not just the happy path: partial failures, timeouts,
+   and cleanup.
+5. Check the tests: does the change assert the new behavior, or just run it?
+
+## Findings, in severity order
+
+Report findings ordered by severity — most critical first:
+
+- **Critical** — correctness bugs, data loss or corruption, security holes
+  (injection, unsafe deserialization, missing authz), or anything that breaks
+  builds or tests. Must be fixed before merge.
+- **High** — likely bugs on realistic paths, race conditions, unhandled
+  errors with real consequences, or security weaknesses that need specific
+  conditions to exploit.
+- **Medium** — design problems that will hurt soon: leaky abstractions,
+  missing validation at trust boundaries, tests that can't fail, resource
+  leaks on uncommon paths.
+- **Low** — readability and maintainability: confusing names, missing or
+  misleading comments, duplication that will drift, dead code.
+
+Every finding must include:
+
+1. **Severity** and a one-line title.
+2. **Location** as `path/to/file.ts:LINE` (line of the offending code, not
+   the diff hunk).
+3. **Why it matters** — the concrete failure mode, not a category name.
+4. **A concrete fix** — the smallest change that resolves it.
+
+Do not report: formatting or style rules a formatter would fix, opinions
+without a failure mode, or praise. If a section of the change is solid,
+say so once in the verdict, not as findings.
+
+## Output format
+
+```
+## Review findings
+
+[Critical] <title>
+  path/to/file.ts:42 — <why it matters>. Fix: <concrete fix>.
+
+[High] ...
+[Medium] ...
+[Low] ...
+
+## Verdict
+
+<One paragraph: is this safe to merge as-is? If not, what are the minimum
+changes required? Distinguish "must fix before merge" from "follow-up".>
+```
+
+If you find nothing above Low, say so explicitly and explain what you
+checked. An empty report that shows its work is more trustworthy than a
+vague one.
+````
+
+Every piece from this chapter is visible in one file: `mode: subagent` makes it dispatchable rather than switchable, `description` tells the parent when to reach for it, the two deny rules make it structurally read-only, and the body is the entire review methodology as its system prompt.
+
+<YouTubeEmbed id="LiJyp20vqdI" title="Create Custom OpenCode Sub-Agents (Quick Guide)" />
+
+## What you should now be able to say
+
+If a colleague asks "how do I get a subagent in OpenCode?", your answer has three rungs. **Zero config:** `build` and `plan` run your sessions; `explore` and `general` are dispatchable today — ask in chat with "use the X subagent to…". **One file:** a Markdown agent in `.opencode/agents/` (or `~/.config/opencode/agents/` for all projects) with a `description`, `mode: subagent`, permissions if the worker must be constrained, and its instructions as the body. **One gate:** the launching parent's own `subagent` permissions decide what it may spawn, while the child always runs on its own permissions. Next chapter: the same idea in Claude Code, where the knobs multiply.

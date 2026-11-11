@@ -2,11 +2,12 @@
 #
 # Ships in Task 8 with questions drawn from Chapters 0-1 material (plus
 # foundational subagent concepts). Task 9 appends chapter-specific questions as
-# its chapters land: exam-26..29 cover Chapter 2 (when to dispatch), and more
-# batches follow for Chapters 3-4. Task 14 verifies the exam spans the whole
-# course — so the exam page is fully data-driven: never assume a fixed question
-# count beyond the validator minimum (>=20, enforced by loadExam). Every
-# question must carry a non-empty explanation.
+# its chapters land: exam-26..29 cover Chapter 2 (when to dispatch),
+# exam-30..33 cover Chapter 3 (OpenCode agents), exam-34..37 cover Chapter 4
+# (Claude Code agents). Task 14 verifies the exam spans the whole course —
+# so the exam page is fully data-driven: never assume a fixed question count
+# beyond the validator minimum (>=20, enforced by loadExam). Every question
+# must carry a non-empty explanation.
 passMarkPercent: 80
 questions:
   - id: exam-01
@@ -259,3 +260,43 @@ questions:
     prompt: "Dispatching one subagent per failing FILE is the correct way to parallelize a broken test suite."
     correct: false
     explanation: "That is arithmetic, not analysis. First ask whether the clusters share a plausible root cause; only independent domains with disjoint files justify a parallel fan-out. Shared cause → one fix in the main conversation, zero dispatches."
+  - id: exam-30
+    type: single
+    prompt: "Which OpenCode built-in has broad tool access for research and multi-step work, but cannot launch more subagents?"
+    options:
+      - "build"
+      - "general"
+      - "explore"
+      - "plan"
+    correct: [1]
+    explanation: "general is the multi-step subagent with broad tool access — and the inability to spawn further subagents is deliberate, bounding the fan-out so the orchestrator decides the topology. explore is the read-only searcher; build and plan are primary agents."
+  - id: exam-31
+    type: multi
+    prompt: "Which statements about custom OpenCode agent files are true?"
+    options:
+      - "Project agents live in .opencode/agents/, global ones in ~/.config/opencode/agents/"
+      - "A nested path becomes part of the agent ID — team/reviewer.md registers as team/reviewer"
+      - "A new custom agent with no mode field defaults to subagent"
+      - "The Markdown body becomes the agent's system prompt"
+    correct: [0, 1, 3]
+    explanation: "Locations and nested IDs are as stated, and the body IS the system prompt. The third is the classic gotcha inverted: a new custom agent without mode defaults to PRIMARY, not subagent."
+  - id: exam-32
+    type: single
+    prompt: "An OpenCode agent has a permissions list with several rules that could match the same tool call. Which rule decides the effect?"
+    options:
+      - "The first matching rule"
+      - "The last matching rule"
+      - "The most restrictive matching rule"
+      - "Undefined — rules are unordered, so any match may apply"
+    correct: [1]
+    explanation: "Permissions are an ordered list and the LAST matching rule wins — which is why broad rules go first and exceptions after them (deny everything, then allow the one agent or path)."
+  - id: exam-33
+    type: single
+    prompt: "An orchestrator agent should be allowed to launch ONLY the reviewer subagent. Which permission list does that?"
+    options:
+      - "allow subagent reviewer first, then deny subagent *"
+      - "deny subagent * first, then allow subagent reviewer"
+      - "allow subagent reviewer only — one rule is enough"
+      - "deny subagent reviewer, then allow subagent *"
+    correct: [1]
+    explanation: "Last match wins: deny * then allow reviewer leaves reviewer allowed and everything else denied. Option A inverts it — the trailing deny would win for reviewer too. Option C allows only reviewer but denies nothing else explicitly, and option D is the exact opposite of the intent."

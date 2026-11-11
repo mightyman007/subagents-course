@@ -1,0 +1,45 @@
+# Chapter 3 flashcards — OpenCode agents.
+- id: c3-f1
+  front: "Name OpenCode V2's four visible built-in agents and their modes."
+  back: "Primary: build (default coding agent) and plan (explores and plans without editing project files). Subagents: general (multi-step, broad tools) and explore (read-only search)."
+  tags: [opencode]
+- id: c3-f2
+  front: "explore vs general — what's the difference?"
+  back: "explore: searches and reads code or web sources, cannot edit — the researcher. general: research and multi-step work with broad tool access, but cannot launch more subagents."
+  tags: [opencode]
+- id: c3-f3
+  front: "Why can't OpenCode's general subagent spawn more subagents?"
+  back: "By design — it bounds the fan-out. The orchestrator decides the agent topology; a dispatched worker never grows an unbounded tree beneath itself."
+  tags: [opencode]
+- id: c3-f4
+  front: "How do you ask for a subagent in OpenCode chat?"
+  back: "Name it in the request: 'Use the explore subagent to find where retry logic lives.' The parent composes the actual dispatch — task, context, constraints, output expectations."
+  tags: [opencode]
+- id: c3-f5
+  front: "Where do custom OpenCode agent files live?"
+  back: "Global: ~/.config/opencode/agents/<name>.md (all projects). Project: .opencode/agents/<name>.md (discovered from cwd up to the project root). JSONC config works too."
+  tags: [opencode]
+- id: c3-f6
+  front: "What does a nested agent path like .opencode/agents/team/reviewer.md register as?"
+  back: "The agent ID team/reviewer — the nested path becomes part of the ID, so directories are an organizing tool with load-bearing paths."
+  tags: [opencode]
+- id: c3-f7
+  front: "What does mode accept — and what is the default for a NEW custom agent?"
+  back: "primary | subagent | all. Default is PRIMARY — the classic gotcha: a worker without mode: subagent shows up in the agent switcher instead of the dispatch catalog."
+  tags: [opencode]
+- id: c3-f8
+  front: "Anatomy of an OpenCode permission rule?"
+  back: "Ordered list of {action, resource, effect} — e.g. edit/*, effect deny. Actions include shell, edit, subagent, read, glob, grep, webfetch, websearch, skill. Wildcards supported."
+  tags: [opencode]
+- id: c3-f9
+  front: "Which permission rule wins in OpenCode — and how should you order them?"
+  back: "The LAST matching rule wins. Write broad rules first (deny *), then exceptions after (allow one path/agent). Global permissions apply before agent-specific ones."
+  tags: [opencode]
+- id: c3-f10
+  front: "How do a parent's subagent permissions and a child's own permissions interact?"
+  back: "The parent's subagent rules gate WHICH agents it may launch; the child runs with its OWN configured permissions. Launching rights are not lent to the child."
+  tags: [opencode]
+- id: c3-f11
+  front: "Quick facts: steps, hidden, disabled on an OpenCode agent?"
+  back: "steps: positive cap on model steps — tools removed at the limit, model asked to summarize; new input resets. hidden: removed from listings/catalog — visibility, not security. disabled: removes the agent (built-in or custom) at that point in config loading."
+  tags: [opencode]
