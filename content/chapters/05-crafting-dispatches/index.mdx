@@ -1,0 +1,153 @@
+---
+title: "Crafting dispatches: the four-part brief"
+order: 5
+objectives:
+  - "Write a dispatch with all four parts: focused scope, self-contained context, explicit constraints, and an output contract"
+  - "Keep one dispatch on one problem domain — and never send 'fix all the tests'"
+  - "State constraints as prohibitions: what the subagent must not touch, not only what it should do"
+  - "Diagnose a failed dispatch as a scope, context, constraint, or contract failure"
+---
+
+Chapter 4 ended on the promise that this chapter covers the part that does not change between tools: writing dispatches worth receiving. Everything so far was mechanism — what subagents are, when to reach for them, how OpenCode and Claude Code spawn them. None of it helps if the brief is bad, because the rule from Chapter 1 still holds: **the subagent knows exactly what the dispatch says — and nothing else.** Dispatch quality is the parent's responsibility. This chapter turns that responsibility into a skill with four checkable parts.
+
+![Flat illustration of an orchestrator composing a dispatch — task, context, constraints, and output contract — before spawning a subagent](/images/learn/orchestrator.svg)
+
+## The four parts
+
+Every dispatch that works has the same anatomy:
+
+1. **Scope** — one problem domain, stated so narrowly the worker cannot drift out of it.
+2. **Context** — everything the child needs to start, pasted into the brief, because it inherits nothing.
+3. **Constraints** — what the child must *not* do: the boundaries that keep the fix acceptable.
+4. **Output contract** — exactly what to return, in what shape, so the result is reviewable.
+
+<Mermaid
+  chart={`
+graph TD
+  D["A dispatch"] --> S["Scope: one problem domain"]
+  D --> C["Context: errors, test names, file paths"]
+  D --> K["Constraints: what NOT to touch"]
+  D --> O["Output contract: exactly what to return"]
+  S --> R["A result you can review"]
+  C --> R
+  K --> R
+  O --> R
+`}
+/>
+
+Four parts, and the failure modes map onto them one-to-one: a dispatch can fail because its scope was too broad, its context was missing, its constraints were unstated, or its output was never specified. The rest of this chapter takes each part in turn, then shows the whole thing assembled — and disassembled — on one example.
+
+## Part 1: Focused scope
+
+**One dispatch, one problem domain.** The single most common dispatch failure is scope that swallowed several problems: "fix all the failing tests," "clean up the codebase," "make the app faster." These read like tasks; to a subagent they are directions into a swamp.
+
+Chapter 2 gave you the test: *independence between fixes* decides whether a pile of work splits into dispatches. That test produces the scope rule. When six failures split into three independent domains, that is **three dispatches, each with one domain** — not one dispatch that mentions six tests. The reasons are mechanical:
+
+- **Attention.** A worker juggling three domains attends to all of them at once, and every one of them gets shallower treatment than it would alone.
+- **Reviewability.** One domain per dispatch means one diff you can review against one intent. Mix domains and the diff becomes a bundle you approve wholesale or reject wholesale.
+- **Failure isolation.** If the worker botches the job, a single-domain dispatch costs you one bounded revert. A multi-domain dispatch entangles everything it touched.
+
+So the scope test is a question you ask of each candidate dispatch: *if this went wrong, could I revert just this?* "Fix all the tests" fails it instantly. "Fix the three session-expiry tests in auth/session.test.ts" passes it.
+
+## Part 2: Self-contained context
+
+Chapter 1's first property of a subagent — a fresh context — has a consequence people keep relearning the hard way: **the child inherits nothing.** Not your conversation, not the errors you just watched scroll past, not the file you had open. If the dispatch does not carry it, the child does not have it.
+
+That makes context the part of the dispatch you write most concretely:
+
+- **Paste the actual errors**, not a summary of them. "TestX fails" wastes a round trip; the assertion message and stack trace the child needs are already in your terminal.
+- **Name the tests precisely** — file and test name, not "the auth tests."
+- **Give file paths** for where the relevant code lives. A path is a head start; without one, the worker spends its budget rediscovering what you already know.
+- **Say what changed recently** if you know it. "This started after the lease-renewal change" is worth more than an hour of the child's blind searching.
+
+The uncomfortable way to check yourself: the dispatch should read as if it will be executed by a competent engineer who joined five minutes ago, has no access to your chat, and cannot ask you questions — because that is exactly who receives it.
+
+## Part 3: Explicit constraints
+
+A constraint is a *prohibition*: what the worker must not do on its way to the goal. This is the part most dispatches leave out, and it is the part that separates an acceptable fix from an unacceptable one.
+
+The reason is simple: **the worker optimizes the goal you stated, by whatever path is cheapest.** Tell a subagent "make these tests pass" and the cheapest path is sometimes to loosen the assertions, bump the timeouts, or delete the flaky test. Nothing in the goal forbids it. Constraints encode the judgment the child cannot infer:
+
+```text
+Do not change production code — this is a diagnostics pass.
+Tests only: do not touch anything under src/.
+Do not make tests pass by increasing timeouts or skipping tests.
+Do not add new dependencies.
+```
+
+Each one closes a specific cheap path you would reject. Notice they are phrased as boundaries, not vibes — "be careful" constrains nothing; "do not edit files under src/" does. The stronger form is structural: a read-only reviewer defined with denied edit permissions (Chapters 3-4) *cannot* overstep, dispatch text or not. Use both layers — permissions where the tool supports them, constraints in the brief regardless.
+
+## Part 4: The output contract
+
+The output contract states exactly what comes back. "And report back" is not a contract — it produces a chat-sized shrug you cannot review, archive, or act on. A contract makes the result *shaped*:
+
+- **For a fix:** root cause in one paragraph, files changed with a one-line reason each, and proof — the test command run and its output tail.
+- **For research:** a structured summary — entry points, data flow, the answer to the question asked.
+- **For review:** findings in severity order, each with a file, a line, and a concrete fix.
+
+Two payoffs, both practical. First, a contracted result is **reviewable**: you check the claims instead of interrogating a wall of text. Second, it is **storable**: a contract-shaped result is what goes into a ledger or a follow-up dispatch (Chapter 7 leans on this hard). The contract also disciplines the child — a worker told "end with the exact test command and its output tail" tends to actually run the tests.
+
+## Assembled, then broken
+
+The bad version — the dispatch everyone sends at least once:
+
+```text
+Fix the race condition in the job queue.
+```
+
+Every part is missing. **Scope:** which race? A job queue can have three timing bugs and this names none of them. **Context:** the worker must rediscover the failing tests, guess which failures matter, and re-derive the architecture. **Constraints:** nothing stops it from "fixing" the race by deleting the sweeper or tripling every timeout. **Contract:** what comes back is undefined — maybe a diff, maybe a shrug.
+
+The good version of the same task:
+
+```text
+Fix a race condition in the background job queue.
+
+Symptoms — three failing tests, all failing on main:
+
+1. queue/lease.test.ts — "renews a lease while the job is running"
+   fails with "lease expired after 5000ms" (renewal was expected at ~2500ms)
+2. queue/complete.test.ts — "completes a job whose lease was renewed"
+   fails with "job rejected: lease expired"
+3. queue/sweeper.test.ts — "sweeper skips jobs with live leases"
+   fails with "sweeper reaped 3 live jobs"
+
+Context:
+- Lease logic lives in queue/lease.ts (renewLease, isExpired)
+- The sweeper loop is queue/sweeper.ts (runSweep, SWEEP_INTERVAL_MS)
+- The completion path is queue/complete.ts, which rejects on isExpired()
+  without consulting pending renewals
+- All three tests pass at commit 4f2c1a9; the failures began with the
+  async-renewal change in queue/lease.ts
+
+Constraints:
+- Edit only queue/lease.ts, queue/sweeper.ts, queue/complete.ts, and the
+  tests under queue/
+- Do not change the database schema or migrations
+- Do not make the tests pass by increasing timeouts or disabling the
+  sweeper — find the actual race
+- Do not touch anything outside queue/
+
+Return contract:
+- One paragraph: the root cause, and why all three tests failed together
+- Every file changed, with a one-line reason
+- The exact test command you ran and its output tail, all three green
+```
+
+Same task, same worker, completely different odds. The bad brief delegates hope; the good brief delegates a **specification** — and notice how each numbered failure, each path, and each prohibition earns its place by closing a way the work could go wrong.
+
+## The four mistakes, in one table
+
+| Mistake | What it looks like | What the child does | The fix |
+| --- | --- | --- | --- |
+| Too broad | "Fix all the failing tests," "clean up the codebase" | Drifts across domains; produces a diff no one can review | One problem domain per dispatch |
+| No context | A goal with no errors, paths, or test names pasted | Burns its budget rediscovering what you already know — or guesses | Paste the actual errors, test names, and file paths |
+| No constraints | The goal stated, the boundaries not | Takes the cheapest path to green — loosened assertions, widened edits | Say what NOT to touch |
+| Vague output | "and report back" | Returns prose you cannot review or archive | Specify exactly what the result contains |
+
+Run a failed dispatch through the table and the diagnosis is usually one row. That is the payoff of the anatomy: "the subagent did a bad job" becomes "the dispatch was missing its constraints," which is fixable on the next attempt.
+
+<YouTubeEmbed id="XSZP9GhhuAc" title="Prompting for Agents | Code w/ Claude — Anthropic" />
+
+## What you should now be able to say
+
+If a colleague asks "how do I write a dispatch that actually works?", your answer is the anatomy: **one problem domain of scope, context pasted in full because the child inherits nothing, constraints that say what not to touch, and an output contract that says exactly what returns** — with the four classic failures (too broad, no context, no constraints, vague output) as the checklist for diagnosing a brief that underdelivered. Next chapter: when you have several *independent* domains, how to run their dispatches at the same time — and what the parent owes the work on the way back.

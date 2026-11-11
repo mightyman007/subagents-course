@@ -4,7 +4,9 @@
 # foundational subagent concepts). Task 9 appended chapter-specific questions
 # as its chapters landed: exam-26..29 cover Chapter 2 (when to dispatch),
 # exam-30..33 cover Chapter 3 (OpenCode agents), and exam-34..37 cover
-# Chapter 4 (Claude Code agents) — 37 questions total. Task 14 verifies the
+# Chapter 4 (Claude Code agents) — 37 questions total. Task 10 continued the
+# pattern for the craft chapters as they landed: exam-38..40 cover Chapter 5
+# (crafting dispatches) — 41 questions total. Task 14 verifies the
 # exam spans the whole course — so the exam page is fully data-driven: never
 # assume a fixed question count beyond the validator minimum (>=20, enforced
 # by loadExam). Every question must carry a non-empty explanation.
@@ -335,3 +337,28 @@ questions:
       - "Longer descriptions always produce better routing, so write them exhaustively"
     correct: [0, 1, 2]
     explanation: "The description is the router; keep it short because descriptions ride along in every session's context — over the 15,000-token budget Claude Code warns at startup. Move the detail into the system prompt, which only loads when the subagent runs."
+  - id: exam-38
+    type: single
+    prompt: "Which list names all four parts of a well-formed dispatch?"
+    options:
+      - "Prompt, model, temperature, max output tokens"
+      - "Scope, context, constraints, output contract"
+      - "Goal, deadline, budget, escalation path"
+      - "Task, tools, permissions, memory"
+    correct: [1]
+    explanation: "The Chapter 5 anatomy: one-problem-domain scope, self-contained context (pasted, because the child inherits nothing), explicit constraints (what NOT to touch), and an output contract (exactly what to return). The four classic dispatch failures map one-to-one onto missing parts."
+  - id: exam-39
+    type: boolean
+    prompt: "You watched the failing tests scroll past in your terminal, so the subagent starts with that knowledge too — you only need to name the overall task."
+    correct: false
+    explanation: "The child inherits nothing: not your conversation, not your terminal, not your open files. Errors, test names, and file paths must be pasted into the dispatch, or the worker burns its budget rediscovering what you already know."
+  - id: exam-40
+    type: single
+    prompt: "A dispatch said 'make the failing integration tests pass.' The subagent returned quickly — it had tripled every timeout in the suite. Which dispatch part was missing?"
+    options:
+      - "Scope — the domain was too large"
+      - "Context — the failure messages were not pasted"
+      - "Constraints — nothing prohibited the cheap path to green"
+      - "Output contract — the report format was unspecified"
+    correct: [2]
+    explanation: "The worker optimized the stated goal by the cheapest path. A constraint like 'do not make the tests pass by increasing timeouts or skipping tests' closes exactly that path — judgment the child cannot infer from the goal alone."

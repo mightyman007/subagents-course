@@ -1,0 +1,41 @@
+# Chapter 5 flashcards — the four-part dispatch.
+- id: c5-f1
+  front: "Name the four parts of a dispatch."
+  back: "Scope (one problem domain), context (everything the child needs, pasted), constraints (what NOT to touch), and the output contract (exactly what to return)."
+  tags: [core]
+- id: c5-f2
+  front: "What does 'focused scope' require — and what is the disqualifier?"
+  back: "One problem domain per dispatch, small enough to revert on its own. 'Fix all the tests' / 'clean up the codebase' are disqualifiers: several problems wearing one brief."
+  tags: [core]
+- id: c5-f3
+  front: "Why must context be pasted into the dispatch?"
+  back: "The subagent inherits NOTHING — no conversation, no open files, no terminal scrollback. If the dispatch does not carry the errors, test names, and paths, the child does not have them."
+  tags: [core]
+- id: c5-f4
+  front: "What does a constraint state, and why that form?"
+  back: "A prohibition — 'do not change production code', 'tests only', 'no timeout bumps'. Workers optimize the stated goal by the cheapest path; prohibitions close the cheap paths you would reject."
+  tags: [core]
+- id: c5-f5
+  front: "What is an output contract?"
+  back: "An exact statement of what returns: for a fix — root cause, files changed with reasons, the test command and its output tail. It makes the result reviewable and storable."
+  tags: [core]
+- id: c5-f6
+  front: "Name the four classic dispatch mistakes."
+  back: "Too broad (multi-domain scope), no context (nothing pasted), no constraints (no prohibitions), vague output ('report back'). Each maps to one missing part of the anatomy."
+  tags: [core]
+- id: c5-f7
+  front: "A worker 'fixed' the tests by loosening their assertions. Which dispatch part failed — and what would it have said?"
+  back: "Constraints. A line like 'do not make tests pass by loosening assertions, increasing timeouts, or skipping tests' closes that exact cheap path."
+  tags: [core]
+- id: c5-f8
+  front: "Who is the mental model of a dispatch's reader?"
+  back: "A competent engineer who joined five minutes ago, has no access to your chat, and cannot ask you questions — because that is exactly who receives it."
+  tags: [core]
+- id: c5-f9
+  front: "How do permissions and dispatch constraints relate?"
+  back: "Two layers. Structural permissions (denied edit/shell on the agent definition) make overstepping impossible; dispatch constraints state the boundaries in the brief. Use both — permissions where the tool supports them, constraints regardless."
+  tags: [core]
+- id: c5-f10
+  front: "What does a good fix-dispatch's return contract contain?"
+  back: "Root cause in one paragraph, every file changed with a one-line reason, and proof: the exact test command run plus its output tail."
+  tags: [core]

@@ -1,0 +1,41 @@
+# Chapter 5 quiz — the four-part dispatch.
+- id: c5-q1
+  type: single
+  prompt: "Your subagent comes back having rewritten three production modules — you only wanted the failing tests repaired. Which dispatch part was missing?"
+  options:
+    - "Scope — the task named too small a domain"
+    - "Context — the errors were not pasted in full"
+    - "Constraints — nothing said what the worker must NOT touch"
+    - "Output contract — the report format was unspecified"
+  correct: [2]
+  explanation: "Unwanted edits are a constraints failure: the goal ('repair the tests') was stated but the boundary ('tests only, do not change production code') was not. A worker optimizes the stated goal by the cheapest path unless a prohibition closes that path."
+- id: c5-q2
+  type: boolean
+  prompt: "'Fix all the failing tests' is an acceptable scope for one dispatch, because the subagent can decide for itself how to partition the work."
+  correct: false
+  explanation: "One problem domain per dispatch. A pile of failures is the PARENT's routing problem — Chapter 2's independence test decides how it splits — and each resulting dispatch carries one domain. A worker juggling domains produces shallow attention and an unreviewable bundle diff."
+- id: c5-q3
+  type: multi
+  prompt: "Which of these must be carried BY the dispatch itself — never assumed?"
+  options:
+    - "The actual error messages from the failing tests"
+    - "The file paths where the relevant code lives"
+    - "The subagent's memory of your earlier conversation"
+    - "What the final report must contain"
+  correct: [0, 1, 2]
+  explanation: "Trick option: the subagent has NO memory of your earlier conversation — a fresh child inherits nothing, so context must be pasted and the output contract must be stated. Errors, paths, and the contract are all dispatch cargo; the conversation is not."
+- id: c5-q4
+  type: single
+  prompt: "What does the output contract buy you?"
+  options:
+    - "It guarantees the subagent's fix is correct"
+    - "It makes the result reviewable and storable — you check claims instead of interrogating prose"
+    - "It lets the subagent skip running the tests"
+    - "It shortens the subagent's context window"
+  correct: [1]
+  explanation: "A contract ('root cause in one paragraph, files changed with reasons, the test command and its output tail') shapes the return so it can be reviewed and archived — Chapter 7's ledger runs on exactly this. It does not verify correctness; that stays the parent's job."
+- id: c5-q5
+  type: boolean
+  prompt: "A constraint like 'do not make the tests pass by increasing timeouts' is redundant once you have described the bug clearly in the dispatch."
+  correct: false
+  explanation: "Description and prohibition do different jobs. The worker optimizes the goal you stated by the cheapest available path — and the cheapest path to green is often the one you would reject. Constraints encode your judgment; the child cannot infer it from a good problem statement."
