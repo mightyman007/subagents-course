@@ -27,6 +27,9 @@ interface DryRunNote {
   id: string;
   deck: string;
   guid: string;
+  front: string;
+  back: string;
+  tags: string[];
 }
 
 interface DryRunDeck {
@@ -151,6 +154,31 @@ describe("anki export — deck data (--dry-run)", () => {
     expect(first.status).toBe(0);
     expect(second.status).toBe(0);
     expect(String(second.stdout)).toBe(String(first.stdout));
+  });
+});
+
+describe("anki export — content drift guard", () => {
+  /**
+   * Task 12 corrected two flashcards (c0-f4 exam wording, c2-f3 "Name three of…")
+   * after an older .apkg had already been committed; the stale deck shipped the
+   * old wording. These pins catch yaml/deck drift at the data layer: the deck
+   * data must carry the corrected strings and never the stale ones.
+   *
+   * Stale strings are pinned EXACTLY (not as the bare "Name the four"), because
+   * three legitimate cards legitimately start with "Name the four" (c5-f1,
+   * c5-f2, c6-f1) — a bare-pin ban would permanently fail on real content.
+   * Exact stale wording extracted from the old package's sqlite (guid-addressed)
+   * before regeneration.
+   */
+  it("carries the Task 12 corrected wording, never the stale wording", () => {
+    const report = dryRun();
+    const deckText = report.notes.map((n) => `${n.front}\n${n.back}`).join("\n");
+    // corrected c2-f3 front / c0-f4 back
+    expect(deckText).toContain("Name three of the 'when NOT to dispatch' situations.");
+    expect(deckText).toContain("It covers the whole course.");
+    // stale c2-f3 front / c0-f4 back must be gone
+    expect(deckText).not.toContain("Name the four 'when NOT to dispatch' situations.");
+    expect(deckText).not.toContain("spanning all chapters");
   });
 });
 
