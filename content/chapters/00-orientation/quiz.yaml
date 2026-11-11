@@ -1,0 +1,31 @@
+# Orientation quiz — how the course itself works.
+- id: c0-q1
+  type: boolean
+  prompt: "Your quiz scores and card marks are stored on this site's server so they can sync between your devices."
+  correct: false
+  explanation: "There is no server. All progress lives in your browser's localStorage under the key 'subagents-course:progress:v1' — which is why progress is per-browser and clearing site data resets it."
+- id: c0-q2
+  type: single
+  prompt: "What marks a chapter as done in your progress?"
+  options:
+    - "Reaching the bottom of the lesson"
+    - "Scoring 60% or higher on the chapter quiz"
+    - "Marking every flashcard in the deck Got it"
+    - "Retaking the quiz once"
+  correct: [1]
+  explanation: "The bar is the quiz: a score of 60% or more marks the chapter done. Flashcards and reading are recommended but never gate completion."
+- id: c0-q3
+  type: single
+  prompt: "How does the final exam differ from chapter quizzes?"
+  options:
+    - "It has no explanations and cannot be retaken"
+    - "It shows pass/fail per question as you answer"
+    - "It gives no feedback until you submit the whole exam, then a single score and pass/fail at an 80% mark"
+    - "It is open-book with a timer"
+  correct: [2]
+  explanation: "Chapter quizzes grade per question with instant explanations; the exam stays silent until you submit everything, then shows one score against the 80% pass mark. Retakes are allowed."
+- id: c0-q4
+  type: boolean
+  prompt: "Retaking a chapter quiz replaces your previously recorded score for that chapter."
+  correct: true
+  explanation: "The progress store keeps one score per chapter — the newest result overwrites the old one, so you can always improve (or honestly worsen) your recorded score."

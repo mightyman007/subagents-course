@@ -1,0 +1,79 @@
+---
+title: "How to use this course"
+order: 0
+objectives:
+  - "Know what each part of a chapter gives you and how they fit together"
+  - "Work through a quiz and a flashcard deck the way they're meant to be used"
+  - "Understand where your progress lives and what counts a chapter as done"
+  - "Find the agent templates and other downloads when you need them"
+---
+
+Welcome. This is a hands-on course about using AI coding subagents — child sessions you dispatch to do work while your main conversation stays clean. It covers OpenCode V2 and Claude Code side by side.
+
+One thing before you start: **everything on this site runs in your browser.** There is no account, no server, and nothing to configure. Read a chapter, take its quiz, flip its deck. That's the whole loop.
+
+## How a chapter is built
+
+Every chapter follows the same shape:
+
+1. **Objectives** — a short list at the top of what you should be able to *do* after reading. Use them as a checklist when you finish.
+2. **The lesson** — the main body, with diagrams, illustrations, and videos where they help.
+3. **A quiz** — a handful of questions with instant per-question feedback and an explanation for every answer, right or wrong.
+4. **A flashcard deck** — the chapter's key facts as flip cards, for spaced repetition over the following days.
+
+<Mermaid
+  chart={`
+graph LR
+  A[Read the lesson] --> B[Take the quiz]
+  B --> C[Flip the deck]
+  C --> D[Next chapter]
+  D --> A
+`}
+/>
+
+Work through chapters **in order** — each one assumes the vocabulary of the ones before it. The [course index](/learn) lists them in sequence and shows your per-chapter state.
+
+## Quizzes
+
+Each quiz question is submitted individually: pick an answer, hit Submit, and you immediately see whether you were right, the correct answer, and *why* — every question in this course has a written explanation, so a wrong answer teaches you something instead of just scoring against you.
+
+Two behaviors worth knowing:
+
+- **Retakes are free.** Take a quiz again at any time; your newest score replaces the old one.
+- **Scoring 60% or higher marks the chapter as done** in your progress. You can keep retaking if you want a cleaner score, but 60% is the bar this course uses for "you absorbed this".
+
+## Flashcards
+
+Decks show one card at a time. Click a card (or press Enter/Space on it) to flip from front to back, then mark yourself honestly:
+
+- **Got it** — you recalled it without hesitation.
+- **Again** — you didn't. It stays in rotation next run.
+
+The deck shuffles with a fixed seed so the page renders consistently; every restart reshuffles into a fresh order. Marks are stored per card, so a partially-worked deck remembers where you were.
+
+## The final exam
+
+After the chapters comes a final exam: twenty questions spanning the whole course. Unlike chapter quizzes, the exam gives **no feedback while you answer** — no per-question right/wrong, just a single submit at the end, a score, and a pass/fail against the **80% pass mark**. You can retake it. Treat it as the honest check that the material stuck, not a hurdle.
+
+## How your progress is stored
+
+Your quiz scores, done chapters, card marks, and exam result are saved **in your browser's localStorage** under the key `subagents-course:progress:v1`. That means:
+
+- Nothing ever leaves your machine — there is no server to send it to.
+- Progress is per-browser and per-device. If you switch browsers or machines, you start fresh.
+- Clearing this site's data in your browser resets everything to zero.
+
+If progress ever looks wrong, a reset is always safe: it just deletes that one key.
+
+## Downloads
+
+Two kinds of files accompany the course:
+
+- **Agent templates** — ready-to-copy agent files you can drop straight into your own setup: a read-only code reviewer for OpenCode V2 (a subagent-mode agent with edit and shell access denied) and the equivalent for Claude Code. You'll meet both in the chapters on configuring agents; the files themselves live in the downloads area so you can grab them without copy-typing.
+- **An Anki deck** — every flashcard in this course, packaged as a real `.apkg` you can import into Anki for long-term review on your phone.
+
+Grab them whenever you reach the relevant chapter — nothing in the course requires them to complete the reading.
+
+## One request
+
+Do the quizzes before peeking at explanations, and mark flashcards honestly. The whole course is built on the assumption that you want to *know* this material, not just click through it. Ready? Start with [What are subagents](/learn/01-what-are-subagents).

@@ -1,0 +1,88 @@
+---
+title: "What are subagents"
+order: 1
+objectives:
+  - "Define a subagent as a child session with its own fresh context window"
+  - "Explain why the parent, not the user, composes the dispatch"
+  - "Describe context isolation and what it protects in the main conversation"
+  - "Distinguish foreground from background dispatch, and name the built-in agents of both tools"
+---
+
+Ask an AI coding agent to survey a large codebase, and something predictable happens: by the time it finishes exploring, your conversation is drowning in grep output, file listings, and half-read implementations. The answer arrives, but the context that produced it now sits permanently in your window, degrading everything that comes after.
+
+Subagents exist to break exactly that trade-off. This chapter defines what one is, why the design works, and what both OpenCode and Claude Code give you out of the box.
+
+## A child session with a fresh context
+
+A **subagent** is a child session: an agent run that the parent spawns to complete one task. Three properties define it:
+
+1. **It starts with a fresh context.** The child does not inherit your conversation history, your earlier dead ends, or the files you happened to open. Its context begins empty and receives only what the dispatch puts there.
+2. **It works autonomously.** The child selects and runs its own tools — searching, reading files, running commands as permitted — without round-tripping every step through the main conversation.
+3. **It returns a result.** When it finishes, a compact final report travels back to the parent. Everything it did along the way stays inside the child.
+
+That's the whole model. Not a second assistant you chat with, not a daemon running in your repo — a focused worker for one dispatch.
+
+<AnimatedDiagram kind="isolation" />
+
+## Why the parent composes the dispatch
+
+Here is the part people miss on first use: **you rarely talk to the subagent directly — the parent does.** When you ask your main agent to "find every place we validate JWTs," the parent itself writes the dispatch: it composes the task description, includes the context the child will need (paths to start from, naming conventions, what the result is for), adds constraints (read-only, time budget, output format), and only then spawns the child.
+
+This has a consequence worth internalizing: **the subagent knows exactly what the dispatch says — and nothing else.** It cannot see your conversation, your open editor, or your intentions. If the parent writes a vague dispatch, the child does vague work. Dispatch quality is the parent's responsibility, and it's a skill — Chapter 5 is devoted to it. For now, remember the division of labor: the parent holds the goal and the plan; the child holds only its task.
+
+![Flat illustration of an orchestrator dispatching three subagents and collecting only their results](/images/learn/orchestrator.svg)
+
+## Context isolation: the main conversation is the asset
+
+Why go to all this trouble? Because the main conversation is the most valuable resource in the system, and it is **consumed by everything that enters it**.
+
+Three mechanisms are at work:
+
+- **Token economy.** Context is finite and expensive. A subagent's exploration — hundreds of tool calls' worth of grep and file reads — happens inside the child's budget. The parent pays only for the result.
+- **Attention quality.** Models attend less reliably to material buried mid-context. Filling the main conversation with raw search output makes every later instruction slightly worse attended. Isolation keeps the parent's context small and dense in *decisions*, not *evidence*.
+- **Mistake containment.** A wrong turn the child takes (a dead-end search, a misread file) never enters the parent's reasoning. The parent sees the conclusion, not the detour.
+
+<Mermaid
+  chart={`
+graph TD
+  P["Parent context: files, history, notes"] -->|"dispatch: task + context + constraints"| C["Child context: starts fresh"]
+  C -->|"tools: search, read, run"| W["Work happens here"]
+  W -->|"only the final result returns"| P
+`}
+/>
+
+Notice what the diagram does *not* show: any path from the child's intermediate work back into the parent. That absence is the feature.
+
+## Foreground and background
+
+A dispatch runs in one of two modes:
+
+- **Foreground** — the parent pauses and waits. The subagent's result arrives as the next beat of the conversation. Simple, deterministic, and what you'll use for most tasks.
+- **Background** — the subagent runs while the parent (and you) keep working; you collect the result later. This is how you run genuinely parallel work: three independent investigations at once, or a long-running task that would otherwise block your flow.
+
+The mechanics of starting and collecting background work differ between OpenCode and Claude Code — the dedicated chapters cover each tool's specifics. The concept, though, is stable: foreground trades parallelism for simplicity; background trades bookkeeping for parallelism.
+
+## Built-in agents exist — start there
+
+You do not need to write any configuration to use subagents today. Both tools ship useful ones:
+
+- **OpenCode V2** has primary agents `build` and `plan`, and ships two subagents: `general`, a capable worker for multi-step tasks with tool access, and `explore`, a fast, read-only agent built for searching and understanding a codebase.
+- **Claude Code** ships built-in subagents too: `Explore` for read-only codebase research (with thoroughness levels you can tune), `Plan` for implementation planning, and `general-purpose` for multi-step work that needs the normal tool set.
+
+Chapter 3 and Chapter 4 cover each tool's built-ins and the custom agent files that go beyond them. For this chapter, the takeaway is smaller and more useful: **dispatching is available right now**, before you configure anything.
+
+<YouTubeEmbed id="dk0kn2evY38" title="How to Use Subagents in Claude Code — Tim Warner" />
+
+<VideoPlaceholder topic="Subagents in 4 minutes — owner screencast" />
+
+## What a subagent is not
+
+Worth pinning down now, because misconceptions here cause real mistakes:
+
+- **Not a second conversation partner.** You don't chat with a subagent; you (via the parent) give it one task and it returns one result.
+- **Not shared state.** The child cannot see or mutate the parent's context. If the child needs information, the dispatch must carry it. If the parent needs the child's findings, the result must state them.
+- **Not always the right tool.** A task that needs tight iterative back-and-forth with you often belongs in the main conversation. Knowing when *not* to dispatch is Chapter 2's subject.
+
+## What you should now be able to say
+
+If a colleague asked "why dispatch a subagent instead of just doing it in the chat?", your answer should be about **isolation**: the child burns its own tokens, on its own fresh context, and only the conclusion comes back — so the main conversation stays small, focused, and trustworthy. The next chapter makes you dangerous with the follow-up question: *when* should you actually do it?

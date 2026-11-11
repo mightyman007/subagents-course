@@ -1,0 +1,37 @@
+# Chapter 1 flashcards — the subagent model.
+- id: c1-f1
+  front: "What is a subagent?"
+  back: "A child session with its own fresh, empty context window, spawned by the parent to complete one task autonomously and return a result."
+  tags: [core]
+- id: c1-f2
+  front: "Who composes a subagent's dispatch — and what goes into it?"
+  back: "The parent. It writes the task: instructions, the context the child needs (paths, conventions, purpose), constraints, and what a good result looks like."
+  tags: [core]
+- id: c1-f3
+  front: "What does the subagent see besides its dispatch?"
+  back: "Nothing. No parent history, no conversation, no open files — only what the dispatch carries. Vague dispatch, vague work."
+  tags: [core]
+- id: c1-f4
+  front: "What is context isolation protecting, exactly?"
+  back: "The main conversation. The child's tool calls and intermediate output never enter the parent's context — only the final result returns."
+  tags: [core]
+- id: c1-f5
+  front: "Name the three benefits of context isolation."
+  back: "1) Token economy — exploration happens in the child's budget. 2) Attention quality — the parent stays dense in decisions, not evidence. 3) Mistake containment — dead ends never reach the parent's reasoning."
+  tags: [core]
+- id: c1-f6
+  front: "Foreground vs background dispatch?"
+  back: "Foreground: the parent pauses and waits for the result. Background: the subagent runs while the parent continues; the result is collected later. Foreground for simplicity, background for parallelism."
+  tags: [core]
+- id: c1-f7
+  front: "Name OpenCode V2's built-in agents (by role)."
+  back: "Primary: build and plan. Subagents: general (multi-step tasks with tool access) and explore (fast, read-only codebase search)."
+  tags: [opencode]
+- id: c1-f8
+  front: "Name Claude Code's built-in subagents."
+  back: "Explore (read-only research, adjustable thoroughness), Plan (implementation planning), and general-purpose (multi-step work with the normal tool set)."
+  tags: [claude-code]
+- id: c1-f9
+  front: "What returns to the parent when a subagent finishes?"
+  back: "A compact final report — the conclusion. The steps that produced it stay inside the child's context."
+  tags: [core]

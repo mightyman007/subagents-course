@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="Abstract illustration: one orchestrator node dispatching work to three subagent nodes and collecting their results">
+  <!-- Orchestrator illustration for Chapter 1 — flat vector on the site's
+       dark charcoal, green accents, monospace glyph decorations. No words. -->
+  <defs>
+    <marker id="o-arrow-green" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#4ade80"/>
+    </marker>
+    <marker id="o-arrow-muted" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#a1a1aa"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="540" fill="#0a0a0b"/>
+
+  <!-- faint dot grid -->
+  <g fill="#27272a">
+    <circle cx="50" cy="50" r="1.5"/><circle cx="110" cy="50" r="1.5"/><circle cx="170" cy="50" r="1.5"/><circle cx="230" cy="50" r="1.5"/><circle cx="290" cy="50" r="1.5"/><circle cx="350" cy="50" r="1.5"/><circle cx="410" cy="50" r="1.5"/><circle cx="470" cy="50" r="1.5"/><circle cx="530" cy="50" r="1.5"/><circle cx="590" cy="50" r="1.5"/><circle cx="650" cy="50" r="1.5"/><circle cx="710" cy="50" r="1.5"/><circle cx="770" cy="50" r="1.5"/><circle cx="830" cy="50" r="1.5"/><circle cx="890" cy="50" r="1.5"/>
+    <circle cx="50" cy="490" r="1.5"/><circle cx="110" cy="490" r="1.5"/><circle cx="170" cy="490" r="1.5"/><circle cx="230" cy="490" r="1.5"/><circle cx="290" cy="490" r="1.5"/><circle cx="350" cy="490" r="1.5"/><circle cx="410" cy="490" r="1.5"/><circle cx="470" cy="490" r="1.5"/><circle cx="530" cy="490" r="1.5"/><circle cx="590" cy="490" r="1.5"/><circle cx="650" cy="490" r="1.5"/><circle cx="710" cy="490" r="1.5"/><circle cx="770" cy="490" r="1.5"/><circle cx="830" cy="490" r="1.5"/><circle cx="890" cy="490" r="1.5"/>
+  </g>
+
+  <!-- corner crosshair ticks -->
+  <g stroke="#27272a" stroke-width="1.5" stroke-linecap="round" fill="none">
+    <path d="M34 44 v-10 M29 39 h10"/>
+    <path d="M926 496 v10 M921 501 h10"/>
+  </g>
+
+  <!-- ============ orchestrator node (left, solid) ============ -->
+  <g>
+    <rect x="90" y="200" width="190" height="120" rx="14" fill="#4ade80" fill-opacity="0.08" stroke="#4ade80" stroke-width="2"/>
+    <rect x="112" y="228" width="146" height="16" rx="5" fill="#4ade80" fill-opacity="0.35"/>
+    <rect x="112" y="256" width="112" height="16" rx="5" fill="#27272a"/>
+    <rect x="112" y="284" width="130" height="16" rx="5" fill="#27272a"/>
+    <text x="112" y="188" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#4ade80">&gt;_</text>
+  </g>
+
+  <!-- ============ dispatch arrows (solid green) ============ -->
+  <g stroke="#4ade80" stroke-width="2.5" stroke-linecap="round">
+    <line x1="280" y1="240" x2="596" y2="128" marker-end="url(#o-arrow-green)"/>
+    <line x1="280" y1="260" x2="596" y2="262" marker-end="url(#o-arrow-green)"/>
+    <line x1="280" y1="280" x2="596" y2="396" marker-end="url(#o-arrow-green)"/>
+  </g>
+
+  <!-- ============ subagent nodes (right, dashed = fresh contexts) ============ -->
+  <g>
+    <!-- subagent 1 -->
+    <rect x="620" y="84" width="230" height="96" rx="12" fill="none" stroke="#4ade80" stroke-width="1.5" stroke-dasharray="7 6"/>
+    <rect x="644" y="112" width="126" height="14" rx="4" fill="#27272a"/>
+    <rect x="644" y="138" width="94" height="14" rx="4" fill="#27272a"/>
+    <!-- subagent 2 -->
+    <rect x="620" y="218" width="230" height="96" rx="12" fill="none" stroke="#4ade80" stroke-width="1.5" stroke-dasharray="7 6"/>
+    <rect x="644" y="246" width="146" height="14" rx="4" fill="#27272a"/>
+    <rect x="644" y="272" width="76" height="14" rx="4" fill="#27272a"/>
+    <!-- subagent 3 -->
+    <rect x="620" y="352" width="230" height="96" rx="12" fill="none" stroke="#4ade80" stroke-width="1.5" stroke-dasharray="7 6"/>
+    <rect x="644" y="380" width="108" height="14" rx="4" fill="#27272a"/>
+    <rect x="644" y="406" width="132" height="14" rx="4" fill="#27272a"/>
+  </g>
+
+  <!-- ============ return arrows (dashed muted, results only) ============ -->
+  <g stroke="#a1a1aa" stroke-width="1.5" stroke-dasharray="3 6" stroke-linecap="round">
+    <line x1="620" y1="132" x2="304" y2="330" marker-end="url(#o-arrow-muted)"/>
+    <line x1="620" y1="266" x2="304" y2="336" marker-end="url(#o-arrow-muted)"/>
+    <line x1="620" y1="400" x2="304" y2="342" marker-end="url(#o-arrow-muted)"/>
+  </g>
+
+  <!-- merged results strip under the orchestrator -->
+  <g>
+    <rect x="90" y="382" width="190" height="66" rx="10" fill="none" stroke="#27272a" stroke-width="2"/>
+    <rect x="110" y="400" width="130" height="12" rx="4" fill="#4ade80"/>
+    <rect x="110" y="422" width="96" height="12" rx="4" fill="#4ade80"/>
+  </g>
+
+  <!-- ============ decorative monospace glyphs ============ -->
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace">
+    <text x="90" y="92" font-size="18" fill="#a1a1aa" opacity="0.55">{ }</text>
+    <text x="856" y="70" font-size="18" fill="#a1a1aa" opacity="0.55">[ ]</text>
+    <text x="90" y="496" font-size="16" fill="#a1a1aa" opacity="0.45">$</text>
+    <text x="470" y="60" font-size="16" fill="#a1a1aa" opacity="0.4">· · ·</text>
+    <text x="560" y="500" font-size="16" fill="#4ade80" opacity="0.6">&gt;_</text>
+  </g>
+
+  <!-- thin baseline rule -->
+  <line x1="50" y1="512" x2="910" y2="512" stroke="#27272a" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Abstract course illustration: a parent context dispatching tasks to three isolated subagent contexts">
+  <!-- Subagents Mastery hero — flat vector on the site's dark charcoal,
+       green accents only, monospace glyph decorations. No words. -->
+  <defs>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#4ade80"/>
+    </marker>
+    <marker id="arrow-muted" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#a1a1aa"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="630" fill="#0a0a0b"/>
+
+  <!-- faint dot grid -->
+  <g fill="#27272a">
+    <circle cx="60" cy="60" r="1.5"/><circle cx="120" cy="60" r="1.5"/><circle cx="180" cy="60" r="1.5"/><circle cx="240" cy="60" r="1.5"/><circle cx="300" cy="60" r="1.5"/><circle cx="360" cy="60" r="1.5"/><circle cx="420" cy="60" r="1.5"/><circle cx="480" cy="60" r="1.5"/><circle cx="540" cy="60" r="1.5"/><circle cx="600" cy="60" r="1.5"/><circle cx="660" cy="60" r="1.5"/><circle cx="720" cy="60" r="1.5"/><circle cx="780" cy="60" r="1.5"/><circle cx="840" cy="60" r="1.5"/><circle cx="900" cy="60" r="1.5"/><circle cx="960" cy="60" r="1.5"/><circle cx="1020" cy="60" r="1.5"/><circle cx="1080" cy="60" r="1.5"/><circle cx="1140" cy="60" r="1.5"/>
+    <circle cx="60" cy="120" r="1.5"/><circle cx="120" cy="120" r="1.5"/><circle cx="180" cy="120" r="1.5"/><circle cx="240" cy="120" r="1.5"/><circle cx="300" cy="120" r="1.5"/><circle cx="360" cy="120" r="1.5"/><circle cx="420" cy="120" r="1.5"/><circle cx="480" cy="120" r="1.5"/><circle cx="540" cy="120" r="1.5"/><circle cx="600" cy="120" r="1.5"/><circle cx="660" cy="120" r="1.5"/><circle cx="720" cy="120" r="1.5"/><circle cx="780" cy="120" r="1.5"/><circle cx="840" cy="120" r="1.5"/><circle cx="900" cy="120" r="1.5"/><circle cx="960" cy="120" r="1.5"/><circle cx="1020" cy="120" r="1.5"/><circle cx="1080" cy="120" r="1.5"/><circle cx="1140" cy="120" r="1.5"/>
+    <circle cx="60" cy="510" r="1.5"/><circle cx="120" cy="510" r="1.5"/><circle cx="180" cy="510" r="1.5"/><circle cx="240" cy="510" r="1.5"/><circle cx="300" cy="510" r="1.5"/><circle cx="360" cy="510" r="1.5"/><circle cx="420" cy="510" r="1.5"/><circle cx="480" cy="510" r="1.5"/><circle cx="540" cy="510" r="1.5"/><circle cx="600" cy="510" r="1.5"/><circle cx="660" cy="510" r="1.5"/><circle cx="720" cy="510" r="1.5"/><circle cx="780" cy="510" r="1.5"/><circle cx="840" cy="510" r="1.5"/><circle cx="900" cy="510" r="1.5"/><circle cx="960" cy="510" r="1.5"/><circle cx="1020" cy="510" r="1.5"/><circle cx="1080" cy="510" r="1.5"/><circle cx="1140" cy="510" r="1.5"/>
+    <circle cx="60" cy="570" r="1.5"/><circle cx="120" cy="570" r="1.5"/><circle cx="180" cy="570" r="1.5"/><circle cx="240" cy="570" r="1.5"/><circle cx="300" cy="570" r="1.5"/><circle cx="360" cy="570" r="1.5"/><circle cx="420" cy="570" r="1.5"/><circle cx="480" cy="570" r="1.5"/><circle cx="540" cy="570" r="1.5"/><circle cx="600" cy="570" r="1.5"/><circle cx="660" cy="570" r="1.5"/><circle cx="720" cy="570" r="1.5"/><circle cx="780" cy="570" r="1.5"/><circle cx="840" cy="570" r="1.5"/><circle cx="900" cy="570" r="1.5"/><circle cx="960" cy="570" r="1.5"/><circle cx="1020" cy="570" r="1.5"/><circle cx="1080" cy="570" r="1.5"/><circle cx="1140" cy="570" r="1.5"/>
+  </g>
+
+  <!-- corner crosshair ticks -->
+  <g stroke="#27272a" stroke-width="1.5" stroke-linecap="round" fill="none">
+    <path d="M40 52 v-12 M34 46 h12"/>
+    <path d="M1160 578 v12 M1154 584 h12"/>
+  </g>
+
+  <!-- ============ parent context (left) ============ -->
+  <g>
+    <rect x="96" y="170" width="240" height="290" rx="14" fill="none" stroke="#27272a" stroke-width="2"/>
+    <!-- context rows: files, history, notes, buffers, todos -->
+    <rect x="122" y="200" width="150" height="26" rx="6" fill="#27272a"/>
+    <rect x="122" y="244" width="188" height="26" rx="6" fill="#27272a"/>
+    <rect x="122" y="288" width="120" height="26" rx="6" fill="#27272a"/>
+    <rect x="122" y="332" width="166" height="26" rx="6" fill="#27272a"/>
+    <rect x="122" y="376" width="104" height="26" rx="6" fill="#27272a"/>
+    <!-- the one green row: the task being composed -->
+    <rect x="122" y="420" width="188" height="26" rx="6" fill="none" stroke="#4ade80" stroke-width="1.5"/>
+    <line x1="136" y1="433" x2="172" y2="433" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="136" y1="433" x2="156" y2="433" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
+    <text x="284" y="439" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15" fill="#4ade80">&gt;_</text>
+  </g>
+
+  <!-- ============ dispatch arrows ============ -->
+  <g stroke="#4ade80" stroke-width="2.5" stroke-linecap="round">
+    <line x1="336" y1="433" x2="516" y2="200" marker-end="url(#arrow-green)"/>
+    <line x1="336" y1="433" x2="516" y2="318" marker-end="url(#arrow-green)"/>
+    <line x1="336" y1="433" x2="516" y2="438" marker-end="url(#arrow-green)"/>
+  </g>
+
+  <!-- ============ sealed child contexts (middle) ============ -->
+  <g>
+    <!-- child 1 -->
+    <rect x="540" y="150" width="220" height="96" rx="12" fill="none" stroke="#4ade80" stroke-width="1.5" stroke-dasharray="7 6"/>
+    <rect x="562" y="178" width="120" height="14" rx="4" fill="#27272a"/>
+    <rect x="562" y="204" width="90" height="14" rx="4" fill="#27272a"/>
+    <!-- child 2 -->
+    <rect x="540" y="272" width="220" height="96" rx="12" fill="none" stroke="#4ade80" stroke-width="1.5" stroke-dasharray="7 6"/>
+    <rect x="562" y="300" width="132" height="14" rx="4" fill="#27272a"/>
+    <rect x="562" y="326" width="76" height="14" rx="4" fill="#27272a"/>
+    <!-- child 3 -->
+    <rect x="540" y="394" width="220" height="96" rx="12" fill="none" stroke="#4ade80" stroke-width="1.5" stroke-dasharray="7 6"/>
+    <rect x="562" y="422" width="108" height="14" rx="4" fill="#27272a"/>
+    <rect x="562" y="448" width="140" height="14" rx="4" fill="#27272a"/>
+  </g>
+
+  <!-- ============ return arrows: only results come back ============ -->
+  <g stroke="#a1a1aa" stroke-width="1.5" stroke-dasharray="3 6" stroke-linecap="round">
+    <line x1="760" y1="198" x2="906" y2="300" marker-end="url(#arrow-muted)"/>
+    <line x1="760" y1="320" x2="906" y2="312" marker-end="url(#arrow-muted)"/>
+    <line x1="760" y1="442" x2="906" y2="324" marker-end="url(#arrow-muted)"/>
+  </g>
+
+  <!-- compact results block: three green result bars -->
+  <g>
+    <rect x="922" y="248" width="160" height="130" rx="12" fill="none" stroke="#27272a" stroke-width="2"/>
+    <rect x="946" y="276" width="112" height="12" rx="4" fill="#4ade80"/>
+    <rect x="946" y="306" width="84" height="12" rx="4" fill="#4ade80"/>
+    <rect x="946" y="336" width="98" height="12" rx="4" fill="#4ade80"/>
+  </g>
+
+  <!-- ============ decorative monospace glyphs ============ -->
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace">
+    <text x="96" y="122" font-size="20" fill="#a1a1aa" opacity="0.55">{ }</text>
+    <text x="1044" y="142" font-size="20" fill="#a1a1aa" opacity="0.55">[ ]</text>
+    <text x="96" y="532" font-size="18" fill="#a1a1aa" opacity="0.45">$</text>
+    <text x="872" y="532" font-size="18" fill="#4ade80" opacity="0.7">&gt;_</text>
+    <text x="1030" y="472" font-size="16" fill="#a1a1aa" opacity="0.4">· · ·</text>
+  </g>
+
+  <!-- thin baseline rule -->
+  <line x1="60" y1="600" x2="1140" y2="600" stroke="#27272a" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

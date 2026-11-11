@@ -1,0 +1,41 @@
+# Chapter 1 quiz — what a subagent is.
+- id: c1-q1
+  type: boolean
+  prompt: "A subagent continues the parent's conversation history, just rendered in a separate window."
+  correct: false
+  explanation: "The defining property is a FRESH context: the child starts empty and receives only what the dispatch contains. Inheriting the parent's history would defeat the isolation that makes subagents useful."
+- id: c1-q2
+  type: single
+  prompt: "When your main agent dispatches a subagent, what does the parent contribute?"
+  options:
+    - "A copy of its full conversation history, so the child has complete context"
+    - "Nothing — the child is expected to discover everything from the repository"
+    - "A composed dispatch: the task description, the context the child needs, and constraints"
+    - "Only the user's last message, verbatim"
+  correct: [2]
+  explanation: "The parent composes the dispatch. The child sees exactly what the dispatch says — and nothing else — which is why dispatch quality is the parent's responsibility (Chapter 5)."
+- id: c1-q3
+  type: multi
+  prompt: "Which of these ship as built-in agents (no configuration required)?"
+  options:
+    - "OpenCode's explore subagent"
+    - "Claude Code's general-purpose agent"
+    - "OpenCode's build agent (a primary agent)"
+    - "A code-reviewer agent you wrote yourself in a project folder"
+  correct: [0, 1, 2]
+  explanation: "OpenCode ships build and plan as primary agents plus general and explore as subagents; Claude Code ships Explore, Plan, and general-purpose. Your own reviewer agent is a CUSTOM agent — the subject of Chapters 3-4."
+- id: c1-q4
+  type: single
+  prompt: "A FOREGROUND dispatch means..."
+  options:
+    - "The subagent keeps running after the session closes"
+    - "The parent conversation pauses until the subagent returns its result"
+    - "The subagent runs with no parent involved"
+    - "Every tool call needs user approval"
+  correct: [1]
+  explanation: "Foreground blocks the parent until the result arrives. Background lets the subagent work while the parent continues, with the result collected later."
+- id: c1-q5
+  type: boolean
+  prompt: "When a subagent finishes, all of its intermediate work — tool calls, file reads, raw search output — flows back into the parent's context."
+  correct: false
+  explanation: "Only the final result returns. Keeping intermediate output inside the child is the whole point of context isolation: the parent's context stays small, dense in decisions, and free of detours."

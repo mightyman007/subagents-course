@@ -1,0 +1,29 @@
+# Orientation flashcards — the course's own mechanics.
+- id: c0-f1
+  front: "Where is your course progress stored?"
+  back: "In your browser's localStorage, under the key 'subagents-course:progress:v1'. Client-side only — nothing is ever sent to a server."
+  tags: [course]
+- id: c0-f2
+  front: "What quiz score marks a chapter as done?"
+  back: "60% or higher. A chapter quiz scoring at or above that threshold automatically records the chapter in your done list."
+  tags: [course]
+- id: c0-f3
+  front: "What do the two flashcard marks mean, and what does each do?"
+  back: "'Got it' = recalled without hesitation; 'Again' = didn't recall. Either mark advances the deck; the mark is stored per card id in your progress."
+  tags: [course]
+- id: c0-f4
+  front: "How does the final exam work?"
+  back: "20 questions spanning all chapters. No per-question feedback while answering — one submit at the end, one score, pass/fail against an 80% mark. Retake allowed."
+  tags: [course]
+- id: c0-f5
+  front: "What comes with the course's agent template downloads?"
+  back: "Two ready-to-copy code-reviewer agent files: one for OpenCode V2 (subagent mode, edit/shell denied) and one for Claude Code (Read/Glob/Grep only)."
+  tags: [course, agents]
+- id: c0-f6
+  front: "How do you reset all course progress?"
+  back: "Clear this site's data in your browser (or the reset control once available). There is no server copy to recover — a reset is truly from zero."
+  tags: [course]
+- id: c0-f7
+  front: "In what order should you take the chapters?"
+  back: "In order. Each chapter assumes the vocabulary of the previous ones, and the course index lists them in sequence with your per-chapter state."
+  tags: [course]
