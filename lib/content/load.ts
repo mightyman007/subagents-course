@@ -132,6 +132,15 @@ function loadYamlArray(file: string, label: string): unknown[] {
 }
 
 /**
+ * Files a chapter directory may contain. A directory holding any of the
+ * content files but missing index.mdx is an incomplete chapter: it would
+ * silently vanish from /learn and generateStaticParams, so the loader must
+ * fail the build instead of filtering it out. Directories with none of these
+ * files (empty, or stray files like .DS_Store) are safe to ignore.
+ */
+const CHAPTER_FILES = ["index.mdx", "quiz.yaml", "flashcards.yaml"] as const;
+
+/**
  * All chapter slugs (directory names under content/chapters/), sorted by
  * frontmatter `order` ascending, ties broken by slug.
  */
@@ -143,13 +152,27 @@ export function loadChapterSlugs(opts: LoaderOptions = {}): string[] {
       "content root",
     );
   }
-  const metas = fs
-    .readdirSync(dir, { withFileTypes: true })
-    .filter(
-      (entry) =>
-        entry.isDirectory() && fs.existsSync(path.join(dir, entry.name, "index.mdx")),
-    )
-    .map((entry) => readChapterFrontmatter(path.join(dir, entry.name), entry.name));
+  const metas: ChapterMeta[] = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const chapterDir = path.join(dir, entry.name);
+    const present = new Set(fs.readdirSync(chapterDir));
+    if (!present.has("index.mdx")) {
+      if (CHAPTER_FILES.some((f) => present.has(f))) {
+        throw new ValidationError(
+          [
+            {
+              path: `chapters.${entry.name}`,
+              message: `missing index.mdx — chapter "${entry.name}" will not render because there is no frontmatter to derive its slug/title/order from; add an index.mdx or remove the directory`,
+            },
+          ],
+          "incomplete chapter directory",
+        );
+      }
+      continue; // empty or irrelevant directory (e.g. only .DS_Store) — safe to ignore
+    }
+    metas.push(readChapterFrontmatter(chapterDir, entry.name));
+  }
   return metas
     .sort((a, b) => a.order - b.order || a.slug.localeCompare(b.slug))
     .map((m) => m.slug);

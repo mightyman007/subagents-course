@@ -1,4 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { loadChapterSlugs, loadChapter, loadExam } from "@/lib/content/load";
 import { ValidationError } from "@/lib/content/schema";
@@ -96,5 +98,68 @@ describe("loadExam", () => {
     const err = catchError(() => loadExam({ root: fixturesRoot }));
     expect(err).toBeInstanceOf(ValidationError);
     expect(err.message).toContain("at least 20");
+  });
+});
+
+describe("loadChapterSlugs with incomplete chapter directories", () => {
+  // Milestone 1 review fix: a chapter dir committed with quiz.yaml/flashcards.yaml
+  // but no index.mdx used to be silently filtered out of /learn and
+  // generateStaticParams with a green build. It must fail loudly instead.
+  let root: string;
+
+  beforeEach(() => {
+    root = fs.mkdtempSync(path.join(os.tmpdir(), "t2-incomplete-"));
+    // A valid chapter so the non-throwing path still has something to return.
+    fs.mkdirSync(path.join(root, "chapters", "00-ok"), { recursive: true });
+    fs.writeFileSync(
+      path.join(root, "chapters", "00-ok", "index.mdx"),
+      [
+        "---",
+        'title: "OK"',
+        "order: 1",
+        "objectives:",
+        '  - "fine"',
+        "---",
+        "",
+        "Body.",
+        "",
+      ].join("\n"),
+    );
+  });
+
+  afterEach(() => {
+    fs.rmSync(root, { recursive: true, force: true });
+  });
+
+  it("throws when a chapter dir has quiz.yaml/flashcards.yaml but no index.mdx", () => {
+    const dir = path.join(root, "chapters", "20-incomplete");
+    fs.mkdirSync(dir);
+    fs.writeFileSync(
+      path.join(dir, "quiz.yaml"),
+      [
+        "- id: q1",
+        "  type: single",
+        '  prompt: "p"',
+        "  options: [a, b]",
+        "  correct: [0]",
+        '  explanation: "e"',
+        "",
+      ].join("\n"),
+    );
+    fs.writeFileSync(
+      path.join(dir, "flashcards.yaml"),
+      ['- id: c1', '  front: "F"', '  back: "B"', ""].join("\n"),
+    );
+    const err = catchError(() => loadChapterSlugs({ root }));
+    expect(err).toBeInstanceOf(ValidationError);
+    expect(err.message).toContain("20-incomplete");
+    expect(err.message).toContain("index.mdx");
+    expect(err.message).toContain("will not render");
+  });
+
+  it("still ignores a directory with no expected chapter content (e.g. only .DS_Store)", () => {
+    fs.mkdirSync(path.join(root, "chapters", "99-junk"));
+    fs.writeFileSync(path.join(root, "chapters", "99-junk", ".DS_Store"), "junk");
+    expect(loadChapterSlugs({ root })).toEqual(["00-ok"]);
   });
 });
