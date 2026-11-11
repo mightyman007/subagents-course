@@ -1,0 +1,41 @@
+# Chapter 8 flashcards — the recipes.
+- id: c8-f1
+  front: "When do you reach for the fix-failing-tests recipe?"
+  back: "A bounded, independent failure cluster (Chapter 2's flowchart green-lights it). Three numbered failures with messages, paths, recent commits — and a root-cause mandate: no timeout bumps, no loosened assertions, no skips."
+  tags: [core]
+- id: c8-f2
+  front: "What does the fix-failing-tests return contract demand?"
+  back: "Root cause in one paragraph explaining ALL the failures, every file changed with a one-line reason, and the exact test command plus output tail — the full suite, not just the named tests."
+  tags: [core]
+- id: c8-f3
+  front: "When do you reach for the code-review recipe — and what is its hard constraint?"
+  back: "Any diff that matters, yours or a teammate's. Read-only: findings only, nothing applied — not even nits. Severity-ordered findings with file:LINE, why it matters, smallest fix, and a verdict separating must-fix from follow-up."
+  tags: [core]
+- id: c8-f4
+  front: "When do you reach for the codebase-research recipe?"
+  back: "Understanding a subsystem before planning or changing it. Read-only, maps entry points, data flow with file:line hops, storage and override behavior, callers — and an explicit open-questions list."
+  tags: [core]
+- id: c8-f5
+  front: "When do you reach for the refactoring recipe?"
+  back: "Structural cleanup with behavior frozen: one module, tests green BEFORE and AFTER with both outputs reported, no public-export changes, and any interface change other code could notice reported explicitly."
+  tags: [core]
+- id: c8-f6
+  front: "What do all four recipes share?"
+  back: "The Chapter 5 skeleton — scope, context, constraints, output contract. They differ in scope, signature constraint, and return contract, never in structure."
+  tags: [core]
+- id: c8-f7
+  front: "What is the first check when the fix-tests recipe returns?"
+  back: "Does the root cause explain all three failures? Two of three is a suspicion, not a root cause — send it back rather than merging half a diagnosis."
+  tags: [core]
+- id: c8-f8
+  front: "What should you spot-check in a research summary — and which section is most valuable?"
+  back: "Trace one data-flow hop yourself; a summary that survives one spot-check is usually solid. The open-questions list is the most valuable section — a report with none is overconfident by default."
+  tags: [core]
+- id: c8-f9
+  front: "Why is the BEFORE test output load-bearing in the refactor recipe?"
+  back: "Because 'still green' proves nothing if the tests were red before the refactor began. Both output tails must be present and green for 'no behavior change' to be a claim you can trust."
+  tags: [core]
+- id: c8-f10
+  front: "What does a returned result count as — a fact or a claim?"
+  back: "A claim. The check is where the parent's judgment lives: verify root causes, spot-check locations, diff against constraints, and run the proof yourself when it looks curated."
+  tags: [core]

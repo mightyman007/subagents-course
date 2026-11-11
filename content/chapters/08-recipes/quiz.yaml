@@ -1,0 +1,51 @@
+# Chapter 8 quiz — the recipes.
+- id: c8-q1
+  type: single
+  prompt: "You need to understand how the CSV import pipeline works before planning changes to it. Which recipe fits?"
+  options:
+    - "Fix failing tests"
+    - "Code review"
+    - "Codebase research — map how it works, read-only, with a structured summary"
+    - "Refactoring"
+  correct: [2]
+  explanation: "Understanding-before-planning is the research recipe: entry points, data flow, storage, callers, and open questions — with a read-only constraint and no edits. The survey noise stays in the child; your conversation gets the map."
+- id: c8-q2
+  type: boolean
+  prompt: "The fix-failing-tests recipe permits increasing timeouts when that makes the suite green — a green suite is a green suite."
+  correct: false
+  explanation: "The recipe carries an explicit root-cause mandate: 'do not just increase timeouts, loosen assertions, or mark tests as skipped.' The cheapest path to green often masks the symptom — and a masked symptom ships to production as a slower, quieter failure."
+- id: c8-q3
+  type: multi
+  prompt: "Which belong to the code-review recipe's return contract?"
+  options:
+    - "Findings in severity order, most critical first"
+    - "Each finding located as file:LINE — the offending line, not the hunk"
+    - "The reviewer applies the Low-severity nits itself while it is in there"
+    - "A verdict paragraph separating must-fix-before-merge from follow-up"
+  correct: [0, 1, 2]
+  explanation: "Severity order, real locations, and a verdict are the contract. 'Apply the nits' breaks the read-only constraint — a reviewer that edits anything has violated its role, and its findings become suspect. Findings only; fixes are someone else's dispatch."
+- id: c8-q4
+  type: single
+  prompt: "In the refactoring recipe, what must be true at BOTH ends of the work — and reported?"
+  options:
+    - "The module must be shorter on both ends"
+    - "Tests must be green before the edit and green after it, with both output tails reported"
+    - "The public exports must grow on both ends"
+    - "A new dependency must be added on both ends"
+  correct: [1]
+  explanation: "The before/after green pair is the proof of 'no behavior change.' The BEFORE half is load-bearing: without it, 'still green' proves nothing — the tests may have been red before the refactor began."
+- id: c8-q5
+  type: single
+  prompt: "The fix-failing-tests recipe just returned. What is the FIRST thing to check?"
+  options:
+    - "Whether the root cause explains all three failures — not just two of them"
+    - "Whether the diff is large enough to justify the token cost"
+    - "Whether the commit message is well written"
+    - "Whether the report praises your architecture"
+  correct: [0]
+  explanation: "A cause explaining two of three failures is a suspicion, not a root cause — send it back. Then verify the constraints (allowed paths, no timeout bumps) and the proof (the FULL suite's output tail, not just the three named tests)."
+- id: c8-q6
+  type: boolean
+  prompt: "All four recipes are the same four-part skeleton from Chapter 5 — scope, context, constraints, output contract — with different nouns."
+  correct: true
+  explanation: "That is the point of the chapter: the anatomy is the reusable skill. The recipes differ in scope (one cluster / one diff / one question / one module), signature constraint, and return contract — never in structure."

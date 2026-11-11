@@ -1,0 +1,159 @@
+---
+title: "Recipes: dispatches you can paste"
+order: 8
+objectives:
+  - "Copy-paste four complete dispatches: fix failing tests, code review, codebase research, and refactoring"
+  - "Recognize the shared skeleton — scope, context, constraints, output contract — across all four recipes"
+  - "Know what to verify when each recipe returns, because a returned result is a claim, not a fact"
+---
+
+This chapter is the payoff of everything since Chapter 5, compressed into artifacts you can paste today. Each recipe is a complete dispatch — full brief, not a sketch — followed by the part courses usually omit: **what to check when it returns.** A returned result is a claim, not a fact; the check is where the parent's judgment lives.
+
+The four recipes share one skeleton. Every dispatch below is the Chapter 5 anatomy with different nouns:
+
+| Recipe | Scope | Signature constraint | Return contract |
+| --- | --- | --- | --- |
+| Fix failing tests | One failure cluster | Find the cause — no timeout bumps, no skips | Root cause, changed files, proof |
+| Code review | One diff or file set | Read-only; findings only, nothing applied | Severity-ordered findings + verdict |
+| Codebase research | One question about the system | Read-only; no edits | Structured summary + open questions |
+| Refactoring | One module | No behavior change; tests green before and after | What changed structurally + interface notes |
+
+Adapt the specifics — paths, test names, file counts — to your repository. Keep the shape.
+
+## Recipe 1: Fix failing tests
+
+**When to use:** a bounded, independent failure cluster — the kind Chapter 2's flowchart green-lights. The dispatch below assumes three failures in one payment-retry domain; swap in your own numbered failures, paths, and recent commits.
+
+```text
+Fix three failing tests in the payment retry logic.
+
+Failing tests:
+
+1. payments/retry.test.ts — "retries a failed charge up to 3 times"
+   fails with "expected 3 calls, received 2"
+2. payments/retry.test.ts — "backs off exponentially between retries"
+   fails with "expected delay of 2000ms, received 0ms"
+3. payments/refund.test.ts — "refunds do not trigger retries"
+   fails with "refund attempted a retry"
+
+Context:
+- Retry logic lives in payments/retry.ts (withRetry, MAX_RETRIES)
+- The refund path is payments/refund.ts, which calls chargeRefund()
+- These tests pass on main; they began failing after commit 91ac04e,
+  which added refund support to the retry path
+
+Constraints:
+- Edit only payments/retry.ts, payments/refund.ts, and the tests
+  under payments/
+- Find the actual cause — do not just increase timeouts, loosen
+  assertions, or mark tests as skipped
+- Do not add new dependencies
+- Do not touch anything outside payments/
+
+Return contract:
+- One paragraph: the root cause, and why all three tests failed
+- Every file changed, with a one-line reason
+- The exact test command you ran and its output tail, all three green
+```
+
+**What to check when it returns.** First, does the root cause actually explain *all three* failures? A cause that explains two of three is a suspicion, not a root cause — send it back rather than merging half a diagnosis. Second, diff against the constraints: only files under the allowed paths, timeouts untouched, no assertion loosened. Third, check the proof is real — the command should be the *full* payments suite, not the three named tests, because a fix that makes three tests pass while breaking a fourth is a net loss. Run the suite yourself if the output tail looks curated.
+
+## Recipe 2: Code review
+
+**When to use:** any diff that matters — your own work before merging, or a teammate's branch. This recipe pairs with the ready-made reviewer agents from Chapters 3-4 ([OpenCode](/downloads/agents/opencode-reviewer.md), [Claude Code](/downloads/agents/claude-code-reviewer.md)); the dispatch text below does the same job when you are dispatching the built-in `explore` / `Explore` agents or a general worker.
+
+```text
+Review the changes on branch feature/retry-refactor. You are read-only:
+report findings — do not apply fixes, do not edit files, do not run
+state-changing commands.
+
+Scope: the branch's diff against main (12 files, heaviest in payments/
+and queue/). Read enough surrounding code to judge each change in its
+context — a line can be correct in isolation and wrong where it sits.
+
+Constraints:
+- Read-only: no edits, no file writes, no state-changing commands
+- Report findings only — do not apply any fix, not even nits
+- Judge the change as it stands; do not redesign the module
+- Skip anything a formatter would fix
+
+Return contract — findings in severity order, most critical first:
+- [Critical | High | Medium | Low] plus a one-line title
+- Location as path/to/file.ts:LINE — the offending line, not the hunk
+- Why it matters: the concrete failure mode, not a category name
+- The smallest concrete fix
+End with a verdict paragraph: is this safe to merge as-is? If not, the
+minimum changes required — must-fix-before-merge separated from
+follow-up. If nothing above Low exists, say so explicitly and list
+what you checked.
+```
+
+**What to check when it returns.** Severity order is a contract, not decoration — if the list opens with a Low, the reviewer did not sort, and you should wonder what else it skipped. Spot-check two or three file:line locations; a reviewer citing lines that do not exist is telling you it skimmed. Read the verdict against the findings: a verdict of "safe to merge" with an open Critical above it is self-contradiction. And confirm nothing was applied — a read-only reviewer that edited anything violated its constraints, and its findings are now suspect too.
+
+## Recipe 3: Codebase research
+
+**When to use:** you need to understand a subsystem before planning or changing it — the survey work Chapter 2 called the textbook fan-out candidate. The full study belongs to a dispatch; your conversation receives the map, not the archaeology.
+
+```text
+Map how our feature-flag system works. This is research only — do not
+edit any file.
+
+Questions to answer:
+1. Where is the entry point — where does a flag lookup start?
+2. What is the data flow from flag definition to the code that reads it?
+3. Where are flags stored, and how do overrides work?
+4. Who are the main callers?
+
+Start from: flags/index.ts (the public API) and flags/evaluate.ts.
+The test at flags/evaluate.test.ts documents expected behavior.
+
+Constraints:
+- Read-only: no edits, no writes, no state-changing commands
+
+Return contract — a structured summary:
+- Entry points: file and exported function for each public API
+- Data flow: numbered steps from definition to read, with file and
+  line for each hop
+- Storage and override behavior, in two short paragraphs
+- Callers: the top call sites, with file paths
+- Open questions: anything you could not determine from the code
+  alone — listed explicitly, not guessed around
+```
+
+**What to check when it returns.** Trace one hop of the data flow yourself — open the named file and confirm the call actually happens there. A research summary that survives one spot-check is usually solid; one that fails it deserves a full re-read of every claim. Treat the open-questions list as the most valuable section: a research report with *no* open questions is overconfident by default, because real subsystems always have something undocumented. And verify nothing changed — research that edited files was not research.
+
+## Recipe 4: Refactoring
+
+**When to use:** structural cleanup with behavior frozen — the dangerous kind of cleanup, because "it works the same" is exactly the claim humans and agents assert without checking. The dispatch below makes the invariant impossible to quietly drop.
+
+```text
+Refactor the session-validation module to remove its duplication.
+Behavior must not change.
+
+Goal: session/validate.ts contains three near-identical validation
+blocks (roughly lines 40-70, 120-150, and 210-240). Extract the shared
+logic into one internal helper and call it from all three sites.
+
+Constraints:
+- Scope: session/validate.ts and its test session/validate.test.ts
+  only — do not touch callers or other modules
+- No behavior change: same inputs, same outputs, same errors, same
+  edge cases — a structural refactor, not a redesign
+- Do not change the module's public exports
+- Tests must be green BEFORE you start editing and green AFTER you
+  finish — run them at both points and report both outputs
+
+Return contract:
+- One paragraph: what was duplicated and what the new helper does
+- The helper's signature and which call sites now use it
+- Any interface change other code could notice — even internal ones
+- The test command and output tail from BEFORE the edit and AFTER
+```
+
+**What to check when it returns.** The before/after test outputs are the load-bearing item: a refactor report without the BEFORE proof is a red flag, because tests may have been red before the refactor started — which means "still green" proves nothing. Both outputs must be present and both must be green. Read the interface-changes section even though the constraint said none: this is where an over-eager worker confesses (or fails to confess) that it renamed something callers use. Finally, diff the scope — a refactor of one module that also "tidied" three other files is out of contract, however harmless it looks.
+
+<YouTubeEmbed id="goOZSXmrYQ4" title="My COMPLETE Agentic Coding Workflow to Build Anything — Cole Medin" />
+
+## What you should now be able to say
+
+If a colleague asks "give me something I can actually use today", you can now hand over four complete dispatches — **fix failing tests with a root-cause mandate, read-only code review with severity-ordered findings, codebase research with a structured-summary contract, and behavior-frozen refactoring with before-and-after proof** — each one the same four-part skeleton from Chapter 5, each followed by the checks that turn a returned claim into a verified fact. That is the whole craft: write briefs worth receiving, run them in parallel when they are independent, orchestrate them into a loop when the work is big, and verify what comes back. The final exam is the last stop.

@@ -7,8 +7,9 @@
 # Chapter 4 (Claude Code agents) — 37 questions total. Task 10 continued the
 # pattern for the craft chapters as they landed: exam-38..40 cover Chapter 5
 # (crafting dispatches) and exam-41..43 cover Chapter 6 (parallel dispatch),
-# exam-44..46 cover Chapter 7 (subagent-driven development) — 47 questions
-# total. Task 14 verifies the
+# exam-44..46 cover Chapter 7 (subagent-driven development), and
+# exam-47..50 cover Chapter 8 (recipes) — 50 questions total. Task 14
+# verifies the
 # exam spans the whole course — so the exam page is fully data-driven: never
 # assume a fixed question count beyond the validator minimum (>=20, enforced
 # by loadExam). Every question must carry a non-empty explanation.
@@ -414,3 +415,38 @@ questions:
     prompt: "The SDD ledger matters because it survives context compaction — the conversation's memory of decisions does not."
     correct: true
     explanation: "A long SDD session outgrows the parent's context window, and compaction summarizes the conversation away. The ledger on disk — task states, decisions, rulings, findings, interface notes — is the durable state the next dispatch reads."
+  - id: exam-47
+    type: single
+    prompt: "Three subsystems need surveying — auth, billing, and the CLI — before you can plan a migration. Which recipe, and how run?"
+    options:
+      - "One fix-failing-tests dispatch covering all three"
+      - "The codebase-research recipe, fanned out as three parallel dispatches — one subsystem each"
+      - "The refactoring recipe, applied to each subsystem in turn"
+      - "The code-review recipe, pointed at the whole repository"
+    correct: [1]
+    explanation: "Understanding-before-planning is the research recipe, and three independent questions are Chapter 6's fan-out: one read-only research dispatch per subsystem, issued in one turn, summaries integrated afterward."
+  - id: exam-48
+    type: multi
+    prompt: "Which actions are OUT of contract for the code-review recipe?"
+    options:
+      - "Applying the Low-severity nits while reviewing"
+      - "Editing a file to confirm a suspected bug"
+      - "Running state-changing commands"
+      - "Reporting findings with file:LINE locations"
+    correct: [0, 1, 2]
+    explanation: "The reviewer is read-only: findings only, nothing applied, no state-changing commands — even for verification. Reporting findings with precise locations is exactly what the contract demands."
+  - id: exam-49
+    type: single
+    prompt: "The refactoring recipe freezes behavior and forbids public-export changes — yet its return contract requires reporting interface changes. Why?"
+    options:
+      - "It does not — an unchanged interface means nothing to report"
+      - "Internal interface changes (like a new helper's shape) can still matter to other code and later dispatches, so they must be stated, not discovered"
+      - "Because interface changes are how the worker proves it refactored"
+      - "Only so the diff looks larger"
+    correct: [1]
+    explanation: "No behavior change does not mean no surface change: extracting a helper, renaming an internal function, or narrowing a type are all invisible to tests but visible to callers and follow-up dispatches. The contract makes them stated facts instead of archaeology."
+  - id: exam-50
+    type: boolean
+    prompt: "The fix-failing-tests recipe's root-cause mandate — 'do not just increase timeouts' — exists because the cheapest path to a green suite often masks the symptom instead of fixing the cause."
+    correct: true
+    explanation: "Workers optimize the stated goal by the cheapest path (Chapter 5). Without the mandate, bumped timeouts and skipped tests are legitimate moves; with it, only a cause that explains every failure counts as done."
