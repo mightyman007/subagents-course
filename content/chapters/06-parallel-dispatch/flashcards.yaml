@@ -1,0 +1,37 @@
+# Chapter 6 flashcards — the fan-out pattern.
+- id: c6-f1
+  front: "What is the fan-out pattern?"
+  back: "Identify independent domains, dispatch one agent per domain with a complete four-part brief, issue them together — then read summaries, check conflicts, run the full suite, and integrate."
+  tags: [core]
+- id: c6-f2
+  front: "What makes dispatches parallel versus sequential?"
+  back: "The parent's issuing behavior. Several dispatches in one turn run in parallel; one dispatch per turn, waiting for each result, is sequential — regardless of each dispatch's foreground/background mode."
+  tags: [core]
+- id: c6-f3
+  front: "Why must every fan-out brief be fully self-contained?"
+  back: "The agents cannot see each other — no briefs, no results, no awareness. Each child knows only its own dispatch, so 'same as the other agent, but for auth' is meaningless inside a brief."
+  tags: [core]
+- id: c6-f4
+  front: "Where does coordination between fan-out workers happen?"
+  back: "Up front, in the parent. Children can't negotiate boundaries mid-flight, so the parent partitions the work before launch: disjoint files, disjoint concerns, fences in the constraints."
+  tags: [core]
+- id: c6-f5
+  front: "Name the four return-side steps."
+  back: "1) Read the summaries. 2) Check for conflicts — same files edited? 3) Run the full test suite. 4) Integrate and record."
+  tags: [core]
+- id: c6-f6
+  front: "Why does a green per-worker check prove nothing after a fan-out?"
+  back: "Each worker verified its own slice in isolation. Only the combination can interact in ways no worker saw — the full suite on the union is the only check that covers it."
+  tags: [core]
+- id: c6-f7
+  front: "Why never dispatch related failures in parallel?"
+  back: "One shared cause means one disease: workers fix local symptoms, the fixes fight or stack, and the real bug survives all reports. Debug in the main conversation; fan out only independent domains."
+  tags: [core]
+- id: c6-f8
+  front: "What counts as agents sharing mutable state — and who prevents it?"
+  back: "Two workers editing the same file, table, or shared config — a last-writer-wins race. The parent prevents it structurally: partition files up front, serialize overlapping domains, or edit shared surfaces in the main conversation."
+  tags: [core]
+- id: c6-f9
+  front: "'Agent A sets up the config, agent B consumes it' — fan-out or not?"
+  back: "Not a fan-out. B depends on A, so it is a pipeline — run it as sequential dispatches. Fan-out work items must be independent, not merely similar."
+  tags: [core]

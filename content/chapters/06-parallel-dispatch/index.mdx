@@ -1,0 +1,83 @@
+---
+title: "Parallel dispatch: the fan-out pattern"
+order: 6
+objectives:
+  - "Run the fan-out pattern: identify independent domains and dispatch one agent per domain"
+  - "Distinguish parallel from sequential by how the parent dispatches — several in one turn versus one per turn"
+  - "Write every brief as if the other agents don't exist, because to each of them they don't"
+  - "Execute the return-side discipline: read summaries, check for conflicts, run the full suite, integrate"
+---
+
+Chapter 5 made you dangerous with one dispatch. But the reason subagents earn their coordination cost is that dispatches can *stack*: three independent investigations launched together, three workers burning their contexts at once, one parent collecting three summaries. This chapter is the execution layer for Chapter 2's decision — you already know *which* work splits; now you run the split.
+
+## The fan-out pattern
+
+The pattern has two halves, and the second half is where most people slip:
+
+1. **Outbound.** Identify the independent domains (Chapter 2's test: are the *fixes* independent?), then dispatch **one agent per domain**, each with a complete four-part brief from Chapter 5.
+2. **Return-side.** When results come back, the parent reads the summaries, checks for conflicts, runs the full suite, and integrates.
+
+<AnimatedDiagram kind="fanout" />
+
+Recall Chapter 2's worked example — six failures across three files, three independent clusters. The fan-out is that decision executed: one dispatch for the payments rounding cluster, one for the auth token-refresh cluster, one for the CLI flag-parsing cluster, all issued at once. Three problem domains, three briefs, zero shared files.
+
+## One turn, several dispatches
+
+What actually makes dispatches parallel? Not the tool, not the mode — **the parent's issuing behavior**:
+
+- **Several dispatches issued in the same turn run in parallel.** The parent spawns them together and none waits for another.
+- **One dispatch per turn is sequential**, even though every individual dispatch was a perfectly good subagent call. The parent dispatches, waits for the result, composes the next dispatch, waits again. That is a pipeline with one lane.
+
+Chapter 4's correction is worth keeping in view here, because the tools differ in their defaults: OpenCode treats foreground and background child sessions as equals, while Claude Code starts main-conversation spawns in the background — the parent keeps working and results arrive as completion notifications. But the invariant underneath both is the same: **parallelism comes from issuing the dispatches together, not from any single dispatch's mode.** A background dispatch that the parent still waits on before issuing the next is sequential with extra steps.
+
+## Every brief stands alone
+
+Here is the property that makes fan-out briefs harder than solo dispatches: **the agents cannot see each other.** Not each other's briefs, not each other's results, not each other's existence. Each child starts fresh knowing only its own dispatch.
+
+The consequences are absolute, not stylistic:
+
+- **Each brief must be fully self-contained** — the full Chapter 5 treatment, three times over. You cannot say "same as the other agent, but for auth" because there is no "the other agent" from the child's point of view.
+- **Coordination happens up front, in the parent.** The children can't negotiate boundaries mid-flight, so the parent must partition the work before launching: disjoint files, disjoint concerns, each domain fenced by its constraints.
+- **No inter-agent contracts.** "Agent A will set up the config, agent B will consume it" is not a fan-out — B depends on A, so it is a pipeline, and pipelines get sequential dispatches.
+
+The discipline that makes this work: write each brief, then reread it with the question *does this brief assume anything another worker is doing?* Every assumption found is a bug in the partition.
+
+## The return side: review and integrate
+
+When the summaries land, the parent's work begins — this is the half of the pattern people skip, and skipping it is how parallel work ships broken:
+
+1. **Read the summaries.** Actually read them. Each worker reports what it did and found; the parent is the only place where the three pictures get assembled into one.
+2. **Check for conflicts.** Did two workers touch the same files? Parallel edits to one file don't merge — last writer wins, and the loser's fix silently vanishes. If the summaries reveal overlap, stop and reconcile before anything else.
+3. **Run the full suite.** Each worker verified its own slice in isolation. Only the parent can verify the *combination* — workers that never met can still interact, and the full test suite is where interactions surface. A green per-worker check proves nothing about the union.
+4. **Integrate.** Commit the combined work, or resolve the overlaps the conflict check surfaced, then record what happened — the results, the conflicts, the resolution.
+
+<Mermaid
+  chart={`
+graph TD
+  P["Parent: three independent domains identified"] --> A["Dispatch A: payments brief"]
+  P --> B["Dispatch B: auth brief"]
+  P --> C["Dispatch C: CLI brief"]
+  A --> S["Summaries return"]
+  B --> S
+  C --> S
+  S --> K{"Same files edited by two workers?"}
+  K -->|"yes"| X["Reconcile the overlap before anything else"]
+  K -->|"no"| T["Run the full test suite"]
+  X --> T
+  T --> I["Integrate and record"]
+`}
+/>
+
+Notice what the diagram does not show: any arrow between A, B, and C. The children never meet — the parent is the only place their work intersects, which is why the return side is the parent's job and not a formality.
+
+## Two anti-patterns
+
+**Related failures in parallel.** Chapter 2 flagged shared root causes as a *decision* error; in execution it bites differently. Dispatch three workers against failures with one common cause and you get three "fixes" for one disease — each worker treats its local symptom, the fixes fight each other or stack up, and the actual bug survives all three reports. If the clusters might share a cause, debug in the main conversation first; fan out only what survives the independence test.
+
+**Agents sharing mutable state.** Two workers editing the same file, two workers writing the same database table, two workers modifying one shared config — each is a last-writer-wins race between your own helpers. The fix is structural, and the parent owns it: partition the files up front, serialize the dispatches if the domains genuinely overlap, or do the shared-surface edits in the main conversation yourself. "They'll probably be fine" is not a partition.
+
+<YouTubeEmbed id="47NuftQkCLE" title="Run Multiple AI Agents in Parallel with Claude Code — ExamPro" />
+
+## What you should now be able to say
+
+If a colleague asks "how do I run several subagents at once?", your answer is the fan-out: **identify independent domains, dispatch one agent per domain with fully self-contained briefs, issue the dispatches in one turn so they run in parallel — then do the return-side work nobody skips safely: read the summaries, check for file conflicts, run the full suite, integrate.** The two ways it fails are dispatching related failures in parallel and letting agents share mutable state; both are partition errors, and both are the parent's to prevent. Next chapter: the full discipline that rides on top of this — a development loop where subagents implement, review, and fix under a ledger.

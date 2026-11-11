@@ -1,0 +1,41 @@
+# Chapter 6 quiz — the fan-out pattern.
+- id: c6-q1
+  type: single
+  prompt: "You dispatch agent A, wait for its result, then dispatch agent B. What did you actually run?"
+  options:
+    - "Parallel dispatch — both are subagents, so they overlapped"
+    - "Sequential dispatch — one per turn, regardless of each dispatch's mode"
+    - "A fan-out with a pipeline bug"
+    - "Nothing — the second dispatch replaced the first"
+  correct: [1]
+  explanation: "Parallelism comes from issuing dispatches together: several in one turn run concurrently; one per turn (dispatch, wait, dispatch, wait) is a one-lane pipeline — even if each individual dispatch ran in the background."
+- id: c6-q2
+  type: boolean
+  prompt: "In a fan-out, each agent can see the other agents' briefs and coordinate with them mid-task."
+  correct: false
+  explanation: "Agents cannot see each other — not briefs, not results, not each other's existence. Coordination happens up front, in the parent's partition; 'agent A will set up what agent B consumes' is a pipeline, not a fan-out."
+- id: c6-q3
+  type: multi
+  prompt: "Which are the parent's return-side duties after a fan-out?"
+  options:
+    - "Read each worker's summary before doing anything else"
+    - "Check whether any two workers edited the same files"
+    - "Run the full test suite on the combined work"
+    - "Trust the union of per-worker green checks and skip the suite"
+  correct: [0, 1, 2]
+  explanation: "Read summaries, check conflicts, run the FULL suite, integrate. Per-worker green checks prove nothing about the union: workers that never met can still interact, and the full suite is where those interactions surface."
+- id: c6-q4
+  type: single
+  prompt: "After a three-agent fan-out, two summaries reveal both workers edited queue/sweeper.ts. What went wrong — and where?"
+  options:
+    - "Nothing — git merges concurrent edits automatically"
+    - "A partition failure: the parent should have kept the file in one worker's brief, serialized the work, or edited it itself"
+    - "The workers failed Chapter 5's output contract"
+    - "The suite should have caught it, so the failure is the tests'"
+  correct: [1]
+  explanation: "Parallel edits to one file are a last-writer-wins race between your own helpers — the loser's fix silently vanishes. The parent owns the partition: disjoint files per brief, serialization for genuinely overlapping domains, or main-conversation edits for shared surfaces."
+- id: c6-q5
+  type: boolean
+  prompt: "Six failing tests that probably share one root cause should be split across parallel workers to fix them faster."
+  correct: false
+  explanation: "Related failures in parallel is the anti-pattern: each worker treats its local symptom, the fixes fight each other, and the shared cause survives every report. Debug in the main conversation first; fan out only what passes Chapter 2's independence test."

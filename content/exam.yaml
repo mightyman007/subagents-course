@@ -6,7 +6,8 @@
 # exam-30..33 cover Chapter 3 (OpenCode agents), and exam-34..37 cover
 # Chapter 4 (Claude Code agents) — 37 questions total. Task 10 continued the
 # pattern for the craft chapters as they landed: exam-38..40 cover Chapter 5
-# (crafting dispatches) — 41 questions total. Task 14 verifies the
+# (crafting dispatches) and exam-41..43 cover Chapter 6 (parallel dispatch) —
+# 44 questions total. Task 14 verifies the
 # exam spans the whole course — so the exam page is fully data-driven: never
 # assume a fixed question count beyond the validator minimum (>=20, enforced
 # by loadExam). Every question must carry a non-empty explanation.
@@ -362,3 +363,28 @@ questions:
       - "Output contract — the report format was unspecified"
     correct: [2]
     explanation: "The worker optimized the stated goal by the cheapest path. A constraint like 'do not make the tests pass by increasing timeouts or skipping tests' closes exactly that path — judgment the child cannot infer from the goal alone."
+  - id: exam-41
+    type: single
+    prompt: "You want three independent investigations running concurrently. Which parent behavior achieves that?"
+    options:
+      - "Dispatch all three in the same turn"
+      - "Dispatch one, read its result, dispatch the next"
+      - "Dispatch them one at a time, each in background mode"
+      - "Have the first agent dispatch the other two when it finishes"
+    correct: [0]
+    explanation: "Parallelism comes from the parent issuing dispatches together: several in one turn run concurrently, while one-per-turn is sequential no matter which mode each dispatch runs in. (A worker dispatching more workers is its own anti-pattern — Chapter 3's bounded fan-out.)"
+  - id: exam-42
+    type: multi
+    prompt: "Which steps belong to the return-side discipline after a fan-out?"
+    options:
+      - "Read every worker's summary before acting"
+      - "Check whether two workers edited the same files"
+      - "Run the full test suite on the combined result"
+      - "Treat per-worker green checks as proof the combination works"
+    correct: [0, 1, 2]
+    explanation: "Read summaries, check conflicts, run the full suite, integrate. The last option is the trap: workers verified their own slices in isolation, and only the full suite exercises interactions between work that never met."
+  - id: exam-43
+    type: boolean
+    prompt: "Two fan-out workers may safely edit the same file if both dispatches tell the worker to be careful with it."
+    correct: false
+    explanation: "'Be careful' is not a partition — concurrent edits to one file are a last-writer-wins race, and the loser's fix silently vanishes. The parent prevents it structurally: disjoint files per brief, serialization for overlapping domains, or main-conversation edits for shared surfaces."
